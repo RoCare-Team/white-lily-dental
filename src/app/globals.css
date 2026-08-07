@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette */
+  --color-navy: #0a2540;
+  --color-navy-700: #123256;
+  --color-navy-600: #1b4270;
+
+  --color-brand: #1668c7;
+  --color-brand-dark: #0f4f9c;
+  --color-brand-600: #1668c7;
+  --color-brand-500: #2a80dd;
+  --color-brand-200: #bfdcf7;
+  --color-brand-100: #e0eefc;
+  --color-brand-50: #f2f8fe;
+
+  /* Deep dental navy-teal — hero banner ground */
+  --color-deep: #07536b;
+  --color-deep-600: #064457;
+
+  /* Coral — secondary accent, used for "Call Now" and highlight details */
+  --color-coral: #ee6f6c;
+  --color-coral-dark: #d95653;
+  --color-coral-100: #fbdedd;
+  --color-coral-50: #fef2f1;
+
+  /* WhatsApp brand green — kept for the WhatsApp action only */
+  --color-whatsapp: #25d366;
+
+  --color-teal: #12a594;
+  --color-teal-50: #ecfaf7;
+
+  --color-ink: #16293d;
+  --color-muted: #5c6f85;
+  --color-line: #e5eaf1;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 16px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-navy);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: var(--color-brand-200);
+    color: var(--color-navy);
+  }
+}
+
+@layer components {
+  /* One container for the whole site: 1240px, 16px / 24px gutters */
+  .wl-container {
+    width: 100%;
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .wl-container {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  /* Default section rhythm: 56px mobile → 64px desktop */
+  .wl-section {
+    padding-block: 3.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .wl-section {
+      padding-block: 4rem;
+    }
+  }
+
+  /* Lighter sections: 44px mobile → 52px desktop */
+  .wl-section-sm {
+    padding-block: 2.75rem;
+  }
+
+  @media (min-width: 768px) {
+    .wl-section-sm {
+      padding-block: 3.25rem;
+    }
+  }
+
+  .wl-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--color-coral);
+  }
+
+  .wl-prose p {
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .wl-prose p + p {
+    margin-top: 0.875rem;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animations */
+@keyframes wl-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.wl-fade-up {
+  animation: wl-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Anchored homepage sections clear the sticky navbar */
+section[id] {
+  scroll-margin-top: 104px;
+}
