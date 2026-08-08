@@ -39,7 +39,7 @@ export const doctors = [
     qualification: "MDS – Oral & Maxillofacial Surgery",
     specialty: "Oral & Maxillofacial Surgery",
     image:
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1659353888101-6e53e32515fe?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Dr. Lakshay Gupta, MDS Oral and Maxillofacial Surgery at White Lily Dental",
     bio: "Dr. Lakshay Gupta handles surgical dentistry at White Lily Dental, including impacted wisdom tooth removal, surgical extractions and pre-prosthetic surgery. Patients consistently describe his procedures as calm, quick and comfortable.",
     focus: [

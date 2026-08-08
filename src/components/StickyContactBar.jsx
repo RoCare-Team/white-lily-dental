@@ -46,7 +46,7 @@ export default function StickyContactBar() {
 
             <Link
               href="/contact"
-              className="inline-flex h-11 items-center gap-2 rounded-[11px] bg-brand px-5 text-[14.5px] font-semibold text-white transition-colors hover:bg-brand-dark"
+              className="inline-flex h-11 items-center gap-2 rounded-[11px] bg-deep px-5 text-[14.5px] font-semibold text-white transition-colors hover:bg-deep-600"
             >
               <CalendarCheck className="h-4 w-4" aria-hidden="true" />
               Book Appointment
@@ -86,7 +86,7 @@ export default function StickyContactBar() {
           </a>
           <Link
             href="/contact"
-            className="flex flex-col items-center justify-center gap-1 bg-brand py-2.5 text-[13px] font-semibold text-white active:bg-brand-dark"
+            className="flex flex-col items-center justify-center gap-1 bg-deep py-2.5 text-[13px] font-semibold text-white active:bg-deep-600"
           >
             <CalendarCheck className="h-5 w-5" aria-hidden="true" />
             Book

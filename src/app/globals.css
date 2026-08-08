@@ -144,11 +144,15 @@
   }
 }
 
-/* Animations */
+/* ---------------------------------------------------------------- Animation
+   Scroll reveals are driven by an IntersectionObserver in <Reveal>, which
+   adds .wl-in. Everything degrades to "already visible" without JS or when
+   the visitor prefers reduced motion. */
+
 @keyframes wl-fade-up {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -156,8 +160,128 @@
   }
 }
 
+@keyframes wl-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes wl-pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes wl-sheen {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(320%) skewX(-18deg);
+  }
+}
+
 .wl-fade-up {
-  animation: wl-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: wl-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wl-float {
+  animation: wl-float 6.5s ease-in-out infinite;
+}
+
+/* Scroll reveal states */
+.wl-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.wl-reveal-left {
+  transform: translateX(-32px);
+}
+
+.wl-reveal-right {
+  transform: translateX(32px);
+}
+
+.wl-reveal-scale {
+  transform: scale(0.945);
+}
+
+.wl-reveal-fade {
+  transform: none;
+}
+
+.wl-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Animated underline for the main navigation */
+.wl-navlink {
+  position: relative;
+}
+
+.wl-navlink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-coral);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wl-navlink:hover::after,
+.wl-navlink[data-active="true"]::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Sheen that sweeps a button on hover */
+.wl-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.wl-sheen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.wl-sheen:hover::before {
+  animation: wl-sheen 0.85s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -165,8 +289,14 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .wl-reveal {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

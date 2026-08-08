@@ -32,8 +32,8 @@ export default function Hero() {
 
         {/* Patient cutout — bottom-anchored inside the left 47% */}
         <div
-          className="absolute inset-y-0 left-0 hidden lg:block"
-          style={{ width: "47%" }}
+          className="wl-fade-up absolute inset-y-0 left-0 hidden lg:block"
+          style={{ width: "47%", animationDelay: "120ms", animationDuration: "0.9s" }}
         >
           <Image
             src={PHOTO}
@@ -48,22 +48,32 @@ export default function Hero() {
         <div className="relative flex flex-col lg:h-115 lg:flex-row lg:items-center lg:justify-end">
           {/* Content */}
           <div className="w-full px-6 pb-7 pt-8 sm:px-8 lg:w-1/2 lg:max-w-142 lg:px-0 lg:pb-0 lg:pr-14 lg:pt-0">
-            <span className="text-[14px] font-semibold uppercase tracking-[0.15em] text-coral">
+            <span className="wl-fade-up block text-[14px] font-semibold uppercase tracking-[0.15em] text-coral" style={{ animationDelay: "60ms" }}>
               Premium Dental Care in Gurugram
             </span>
 
-            <h1 id="hero-heading" className="mt-3 font-bold text-white" style={HEADING}>
+            <h1
+              id="hero-heading"
+              className="wl-fade-up mt-3 font-bold text-white"
+              style={{ ...HEADING, animationDelay: "140ms" }}
+            >
               Advanced Dental Care
               <br />
               For Your <span className="text-coral">Healthiest Smile</span>
             </h1>
 
-            <p className="mt-4.5 text-[15.5px] font-medium text-white/85">
+            <p
+              className="wl-fade-up mt-4.5 text-[15.5px] font-medium text-white/85"
+              style={{ animationDelay: "220ms" }}
+            >
               Pain-Free Treatments&nbsp; | &nbsp;Advanced Technology&nbsp; |
               &nbsp;Specialist Dentists
             </p>
 
-            <div className="mt-4.5 flex items-center gap-2.5 text-[15px] text-white/85">
+            <div
+              className="wl-fade-up mt-4.5 flex items-center gap-2.5 text-[15px] text-white/85"
+              style={{ animationDelay: "300ms" }}
+            >
               <span
                 className="flex items-center gap-0.5"
                 role="img"
@@ -82,10 +92,13 @@ export default function Hero() {
               </span>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div
+              className="wl-fade-up mt-6 flex flex-col gap-3 sm:flex-row"
+              style={{ animationDelay: "380ms" }}
+            >
               <a
                 href="/contact"
-                className="inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-deep transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-50"
+                className="wl-sheen inline-flex h-[46px] items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-deep transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-50"
               >
                 Book Appointment
                 <ArrowRight className="h-[18px] w-[18px]" aria-hidden="true" />

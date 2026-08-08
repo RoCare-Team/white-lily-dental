@@ -14,7 +14,7 @@ export const metadata = {
   openGraph: {
     title: "Dental Services in Gurugram | White Lily Dental",
     description:
-      "Explore all dental treatments offered at White Lily Dental's Sector 69 and Sector 77 clinics in Gurugram.",
+      "Explore all dental treatments offered at White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram.",
     url: "/services",
     type: "website",
     images: ["/og-image.png"],

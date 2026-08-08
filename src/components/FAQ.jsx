@@ -5,6 +5,7 @@ import { Minus, Plus } from "lucide-react";
 
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
+import Reveal from "./Reveal";
 
 export default function FAQ({
   eyebrow = "FAQ",
@@ -21,9 +22,11 @@ export default function FAQ({
   return (
     <section className={`wl-section ${className}`} aria-labelledby={headingId}>
       <Container>
-        <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} />
+        <Reveal>
+          <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} />
+        </Reveal>
 
-        <div className="mx-auto mt-8 max-w-3xl divide-y divide-line overflow-hidden rounded-[14px] border border-line bg-white">
+        <Reveal variant="scale" delay={80} className="mx-auto mt-8 max-w-3xl divide-y divide-line overflow-hidden rounded-[14px] border border-line bg-white">
           {items.map((item, index) => {
             const isOpen = openIndex === index;
             return (
@@ -78,7 +81,7 @@ export default function FAQ({
               </div>
             );
           })}
-        </div>
+        </Reveal>
       </Container>
     </section>
   );

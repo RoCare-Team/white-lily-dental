@@ -4,23 +4,26 @@ import { Clock, MapPin, Navigation, Phone } from "lucide-react";
 
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
+import Reveal from "./Reveal";
 import { clinics } from "@/data/clinics";
 
 export default function ClinicsSection({ className = "" }) {
   return (
     <section className={`wl-section ${className}`} aria-labelledby="clinics-heading">
       <Container>
-        <SectionHeading
-          eyebrow="Our Locations"
+        <Reveal>
+          <SectionHeading
+            eyebrow="Our Locations"
           title="Visit Us at Our Gurugram Clinics"
-          subtitle="Two fully equipped clinics in Gurugram, open Monday to Sunday, with the same specialists and the same standard of care at both."
-        />
+            subtitle="Three fully equipped clinics across Gurugram, open Monday to Sunday, with the same specialists and the same standard of care at each."
+          />
+        </Reveal>
 
-        <ul className="mt-9 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {clinics.map((clinic) => (
-            <li key={clinic.id} className="h-full">
+        <ul className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {clinics.map((clinic, i) => (
+            <Reveal as="li" key={clinic.id} delay={i * 120} className="h-full">
               <article className="group flex h-full flex-col overflow-hidden rounded-[14px] border border-line bg-white transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_18px_34px_-20px_rgba(10,37,64,0.3)]">
-                <div className="relative h-52 overflow-hidden">
+                <div className="relative h-44 overflow-hidden">
                   <Image
                     src={clinic.image}
                     alt={clinic.imageAlt}
@@ -35,7 +38,7 @@ export default function ClinicsSection({ className = "" }) {
                 </div>
 
                 <div className="flex flex-1 flex-col p-5 sm:p-7">
-                  <h3 className="text-[19px] font-bold leading-snug text-navy">
+                  <h3 className="text-[18px] font-bold leading-snug text-navy">
                     {clinic.name}
                   </h3>
 
@@ -71,14 +74,14 @@ export default function ClinicsSection({ className = "" }) {
                     </a>
                     <Link
                       href="/contact"
-                      className="inline-flex h-11 items-center rounded-xl bg-brand px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-brand-dark"
+                      className="inline-flex h-11 items-center rounded-xl bg-deep px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-deep-600"
                     >
                       Book Appointment
                     </Link>
                   </div>
                 </div>
               </article>
-            </li>
+            </Reveal>
           ))}
         </ul>
       </Container>

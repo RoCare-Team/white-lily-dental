@@ -116,7 +116,7 @@ export const posts = [
     readTime: "6 min read",
     date: "2026-03-20",
     dateLabel: "20 March 2026",
-    image: img("1606811971618-4486d14f3f99"),
+    image: img("1739902526173-06750b78cfb7"),
     imageAlt: "Dental implant model on a clinical table used to explain treatment to patients",
     body: [
       {
@@ -186,7 +186,7 @@ export const posts = [
     readTime: "4 min read",
     date: "2026-05-08",
     dateLabel: "8 May 2026",
-    image: img("1588776814546-daab30f310ce"),
+    image: img("1497486443155-158cceb6629a"),
     imageAlt: "Child having a friendly first dental check-up with a dentist",
     body: [
       {

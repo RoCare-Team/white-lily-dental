@@ -1,4 +1,5 @@
 ﻿import Container from "./Container";
+import Reveal from "./Reveal";
 import { associations } from "@/data/associations";
 
 export default function Associations() {
@@ -13,9 +14,12 @@ export default function Associations() {
         </h2>
 
         <ul className="no-scrollbar mt-7 -mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-6">
-          {associations.map((item) => (
-            <li
+          {associations.map((item, i) => (
+            <Reveal
+              as="li"
               key={item.abbr}
+              delay={i * 60}
+              variant="fade"
               className="group flex min-w-[160px] flex-1 flex-col items-center justify-center gap-1 rounded-[14px] border border-line bg-white px-4 py-6 grayscale transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:grayscale-0"
               title={item.name}
             >
@@ -25,7 +29,7 @@ export default function Associations() {
               <span className="text-center text-[14px] text-muted">
                 {item.note}
               </span>
-            </li>
+            </Reveal>
           ))}
         </ul>
       </Container>

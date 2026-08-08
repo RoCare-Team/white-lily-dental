@@ -14,12 +14,12 @@ import { breadcrumbSchema } from "@/lib/schema";
 export const metadata = {
   title: "Contact Us | Book a Dental Appointment in Gurugram",
   description:
-    "Book an appointment at White Lily Dental Gurugram. Call +91 97118 11272 or visit our Sector 69 or Sector 77 clinic. Open Monday to Sunday, 11 AM to 7:30 PM.",
+    "Book an appointment at White Lily Dental Gurugram. Call +91 97118 11272 or visit any of our three Gurugram clinics. Open Monday to Sunday, 11 AM to 7:30 PM.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact White Lily Dental | Gurugram",
     description:
-      "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69 and Sector 77 clinics in Gurugram.",
+      "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram.",
     url: "/contact",
     type: "website",
     images: ["/og-image.png"],
@@ -50,7 +50,7 @@ export default function ContactPage() {
     <>
       <PageHero
         title="Book an Appointment"
-        subtitle={`Call, WhatsApp or send a request below. Our team will confirm a slot at the Sector 69 or Sector 77 clinic. Open ${site.hours}.`}
+        subtitle={`Call, WhatsApp or send a request below. Our team will confirm a slot at the clinic nearest you. Open ${site.hours}.`}
         breadcrumbs={[{ name: "Contact Us", href: "/contact" }]}
       />
 

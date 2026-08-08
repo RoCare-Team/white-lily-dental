@@ -36,7 +36,7 @@ export default function DoctorCard({ doctor }) {
           </Link>
           <Link
             href="/contact"
-            className="inline-flex h-11 items-center gap-1.5 rounded-[11px] bg-brand px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-brand-dark"
+            className="inline-flex h-11 items-center gap-1.5 rounded-[11px] bg-deep px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-deep-600"
           >
             <CalendarCheck className="h-4 w-4" aria-hidden="true" />
             Book Appointment

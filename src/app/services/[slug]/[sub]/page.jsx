@@ -6,70 +6,69 @@ import { ArrowRight, CalendarCheck, ChevronRight, Home, Phone } from "lucide-rea
 import Container from "@/components/Container";
 import Button from "@/components/Button";
 import SectionHeading from "@/components/SectionHeading";
-import ServiceCard from "@/components/ServiceCard";
 import ServiceBody from "@/components/ServiceBody";
 import ServiceEnquiryForm from "@/components/ServiceEnquiryForm";
-import SubServiceGrid from "@/components/SubServiceGrid";
 import ClinicsSection from "@/components/ClinicsSection";
-import FAQ from "@/components/FAQ";
 import CTASection from "@/components/CTASection";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
 
-import { services, getService, getRelatedServices } from "@/data/services";
+import { getService, getSubService, subServiceParams } from "@/data/services";
 import { site, telHref } from "@/data/site";
-import { breadcrumbSchema, faqSchema, serviceSchema } from "@/lib/schema";
+import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
 
 export function generateStaticParams() {
-  return services.map((service) => ({ slug: service.slug }));
+  return subServiceParams;
 }
 
 export async function generateMetadata({ params }) {
-  const { slug } = await params;
+  const { slug, sub } = await params;
   const service = getService(slug);
+  const subService = getSubService(slug, sub);
 
-  if (!service) return { title: "Service Not Found" };
+  if (!service || !subService) return { title: "Treatment Not Found" };
 
-  const url = `/services/${service.slug}`;
+  const url = `/services/${slug}/${sub}`;
 
   return {
-    title: { absolute: service.seoTitle },
-    description: service.seoDescription,
+    title: { absolute: subService.seoTitle },
+    description: subService.seoDescription,
     alternates: { canonical: url },
     openGraph: {
-      title: service.seoTitle,
-      description: service.seoDescription,
+      title: subService.seoTitle,
+      description: subService.seoDescription,
       url,
       type: "article",
       images: [{ url: service.image, width: 1200, height: 630, alt: service.imageAlt }],
     },
     twitter: {
       card: "summary_large_image",
-      title: service.seoTitle,
-      description: service.seoDescription,
+      title: subService.seoTitle,
+      description: subService.seoDescription,
       images: [service.image],
     },
   };
 }
 
-export default async function ServicePage({ params }) {
-  const { slug } = await params;
+export default async function SubServicePage({ params }) {
+  const { slug, sub } = await params;
   const service = getService(slug);
+  const subService = getSubService(slug, sub);
 
-  if (!service) notFound();
+  if (!service || !subService) notFound();
 
   const Icon = service.icon;
-  const related = getRelatedServices(slug);
+  const siblings = service.subServices.filter((s) => s.slug !== sub);
 
   const crumbs = [
     { name: "Home", href: "/" },
     { name: "Services", href: "/services" },
     { name: service.title, href: `/services/${service.slug}` },
+    { name: subService.name, href: `/services/${slug}/${sub}` },
   ];
 
   return (
     <>
-      {/* Hero */}
       <section className="relative overflow-hidden border-b border-line bg-brand-50/50">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0">
           <div className="absolute -right-40 -top-40 h-[420px] w-[420px] rounded-full bg-white/70" />
@@ -96,8 +95,17 @@ export default async function ServicePage({ params }) {
                 </li>
                 <li className="flex items-center gap-1.5">
                   <ChevronRight className="h-3.5 w-3.5 text-line" aria-hidden="true" />
-                  <span className="font-medium text-navy" aria-current="page">
+                  <Link
+                    href={`/services/${service.slug}`}
+                    className="transition-colors hover:text-brand"
+                  >
                     {service.title}
+                  </Link>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <ChevronRight className="h-3.5 w-3.5 text-line" aria-hidden="true" />
+                  <span className="font-medium text-navy" aria-current="page">
+                    {subService.name}
                   </span>
                 </li>
               </ol>
@@ -105,15 +113,15 @@ export default async function ServicePage({ params }) {
 
             <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-1.5 text-[14px] font-semibold text-brand-dark">
               <Icon className="h-4 w-4" aria-hidden="true" />
-              Treatment in Gurugram
+              {service.title}
             </span>
 
-            <h1 className="mt-4 text-[30px] font-bold leading-[1.15] text-navy sm:text-[38px] lg:text-[44px]">
-              {service.title}
+            <h1 className="mt-4 text-[30px] font-bold leading-[1.15] text-navy sm:text-[38px] lg:text-[42px]">
+              {subService.name}
             </h1>
 
             <p className="mt-5 max-w-xl text-[16px] leading-[1.6] text-muted">
-              {service.seoDescription}
+              {subService.seoDescription}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -143,76 +151,79 @@ export default async function ServicePage({ params }) {
         </Container>
       </section>
 
-      {/* Live-site copy on the left, enquiry form alongside */}
       <section className="wl-section" aria-label="Treatment details">
         <Container className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-8">
-            <ServiceBody tagline={service.tagline} sections={service.sections} />
+            <ServiceBody sections={subService.sections} />
           </div>
 
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-28">
-              <ServiceEnquiryForm treatment={service.title} />
+              <ServiceEnquiryForm treatment={subService.name} />
             </div>
           </aside>
         </Container>
       </section>
 
-      <SubServiceGrid service={service} className="bg-brand-50/40" />
-
-      {/* Related treatments */}
-      {related.length ? (
-        <section className="wl-section" aria-labelledby="related-heading">
+      {siblings.length ? (
+        <section className="wl-section bg-brand-50/40" aria-labelledby="sibling-heading">
           <Container>
-            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
-              <Reveal>
-                <SectionHeading
-                  align="left"
-                  eyebrow="Related Treatments"
-                  title="You Might Also Need"
-                  subtitle="Treatments that often go together with this one, at all three of our Gurugram clinics."
-                />
-              </Reveal>
-              <Link
-                href="/services"
-                className="inline-flex shrink-0 items-center gap-1.5 text-[14.5px] font-semibold text-coral hover:text-coral-dark"
-              >
-                View all services
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
+            <Reveal>
+              <SectionHeading
+                eyebrow="Other Options"
+                title={`More ${service.title} Options`}
+                subtitle="Not sure which suits you? Our specialists will guide you at your consultation."
+              />
+            </Reveal>
 
-            <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {related.map((item, i) => (
-                <Reveal as="li" key={item.slug} delay={i * 90} className="h-full">
-                  <ServiceCard service={item} />
+            <ul className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {siblings.map((item, i) => (
+                <Reveal as="li" key={item.slug} delay={(i % 3) * 90} className="h-full">
+                  <Link
+                    href={`/services/${service.slug}/${item.slug}`}
+                    className="group flex h-full flex-col rounded-[14px] border border-line bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_18px_34px_-20px_rgba(10,37,64,0.3)]"
+                  >
+                    <h3 className="text-[18px] font-bold leading-snug text-navy transition-colors group-hover:text-brand">
+                      {item.name}
+                    </h3>
+                    <p className="mt-2.5 line-clamp-3 flex-1 text-[15px] leading-[1.6] text-muted">
+                      {item.blurb}
+                    </p>
+                    <span className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-coral">
+                      Read more
+                      <ArrowRight
+                        className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </Link>
                 </Reveal>
               ))}
             </ul>
+
+            <div className="mt-8 text-center">
+              <Link
+                href={`/services/${service.slug}`}
+                className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-coral hover:text-coral-dark"
+              >
+                Back to {service.title}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
           </Container>
         </section>
       ) : null}
 
-      <FAQ
-        className="bg-brand-50/40"
-        headingId="service-faq-heading"
-        eyebrow="FAQ"
-        title={`${service.title} — Frequently Asked Questions`}
-        subtitle="Common questions our Gurugram patients ask about this treatment."
-        items={service.faqs}
-      />
-
       <CTASection
-        headingId="service-cta-heading"
-        title={`Book Your ${service.title} Consultation`}
+        headingId="sub-cta-heading"
+        title={`Book Your ${subService.name} Consultation`}
         subtitle="Call us or send a request and our team will confirm a time that works for you."
       />
 
       <ClinicsSection />
 
-      <JsonLd data={serviceSchema(service)} />
+      <JsonLd data={serviceSchema({ ...service, title: subService.name, slug: `${slug}/${sub}`, seoDescription: subService.seoDescription })} />
       <JsonLd data={breadcrumbSchema(crumbs)} />
-      <JsonLd data={faqSchema(service.faqs)} />
     </>
   );
 }

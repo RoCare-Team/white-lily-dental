@@ -3,21 +3,24 @@ import { Check, Sparkles } from "lucide-react";
 
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
+import Reveal from "./Reveal";
 import { plans } from "@/data/plans";
 
 export default function PricingPlans({ className = "" }) {
   return (
     <section className={`wl-section ${className}`} aria-labelledby="plans-heading">
       <Container>
-        <SectionHeading
-          eyebrow="Dental Plans"
+        <Reveal>
+          <SectionHeading
+            eyebrow="Dental Plans"
           title="Affordable Annual Dental Plans"
-          subtitle="Prepaid family cover for consultations, X-rays and cleaning at both clinics."
-        />
+            subtitle="Prepaid family cover for consultations, X-rays and cleaning at all three clinics."
+          />
+        </Reveal>
 
         <ul className="mx-auto mt-8 grid max-w-260 grid-cols-1 gap-5 md:mt-10 md:grid-cols-3">
           {plans.map((plan) => (
-            <li key={plan.id} className="h-full">
+            <Reveal as="li" key={plan.id} delay={plan.popular ? 0 : 120} variant="scale" className="h-full">
               <article
                 className={`relative flex h-full flex-col rounded-[14px] border p-5 transition-all duration-300 ${
                   plan.popular
@@ -97,18 +100,18 @@ export default function PricingPlans({ className = "" }) {
                   className={`mt-6 inline-flex h-12 items-center justify-center rounded-[11px] text-[15px] font-semibold transition-all duration-300 hover:-translate-y-0.5 ${
                     plan.popular
                       ? "bg-white text-navy hover:bg-brand-50"
-                      : "bg-brand text-white hover:bg-brand-dark"
+                      : "bg-deep text-white hover:bg-deep-600"
                   }`}
                 >
                   Choose Plan
                 </Link>
               </article>
-            </li>
+            </Reveal>
           ))}
         </ul>
 
         <p className="mt-6 text-center text-[14px] text-muted">
-          Valid for one year at both the Sector 69 and Sector 77 clinics.
+          Valid for one year at all three Gurugram clinics.
           Treatment costs are billed separately.
         </p>
       </Container>

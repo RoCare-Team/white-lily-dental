@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import Container from "./Container";
+import Reveal from "./Reveal";
 import Button from "./Button";
 
 export default function SplitFeature({
@@ -23,7 +24,10 @@ export default function SplitFeature({
     <section className={`wl-section-sm ${className}`} aria-labelledby={headingId}>
       <Container className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Image — fixed height so it never drives the section */}
-        <div className={reverse ? "lg:order-2" : ""}>
+        <Reveal
+          variant={reverse ? "right" : "left"}
+          className={reverse ? "lg:order-2" : ""}
+        >
           <div className="relative h-60 overflow-hidden rounded-[14px] border border-line sm:h-72 lg:h-88">
             <Image
               src={image}
@@ -33,10 +37,14 @@ export default function SplitFeature({
               className="object-cover"
             />
           </div>
-        </div>
+        </Reveal>
 
         {/* Content */}
-        <div className={reverse ? "lg:order-1" : ""}>
+        <Reveal
+          variant={reverse ? "left" : "right"}
+          delay={90}
+          className={reverse ? "lg:order-1" : ""}
+        >
           {eyebrow ? (
             <span className="wl-eyebrow">
               <span className="h-px w-6 bg-coral/50" aria-hidden="true" />
@@ -101,7 +109,7 @@ export default function SplitFeature({
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           ) : null}
-        </div>
+        </Reveal>
       </Container>
     </section>
   );

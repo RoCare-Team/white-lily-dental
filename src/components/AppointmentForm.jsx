@@ -211,9 +211,9 @@ export default function AppointmentForm() {
 
       <button
         type="submit"
-        className="mt-7 inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 text-[14.5px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(22,104,199,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-dark sm:w-auto"
+        className="mt-7 inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-deep px-6 text-[14.5px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(7,83,107,0.85)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600 sm:w-auto"
       >
-        <MessageCircle className="h-[18px] w-[18px]" aria-hidden="true" />
+        <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
         Send Request on WhatsApp
       </button>
 
@@ -234,7 +234,7 @@ export default function AppointmentForm() {
           role="status"
           className="mt-5 flex items-start gap-2.5 rounded-xl border border-coral/30 bg-coral-50 p-4 text-[13.5px] leading-relaxed text-navy"
         >
-          <CheckCircle2 className="mt-0.5 h-[18px] w-[18px] shrink-0 text-coral" aria-hidden="true" />
+          <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral" aria-hidden="true" />
           Your request has been opened in WhatsApp. Send the message and our team
           will confirm your appointment shortly.
         </p>

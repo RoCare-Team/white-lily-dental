@@ -3,7 +3,6 @@ import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import StickyContactBar from "@/components/StickyContactBar";
 import JsonLd from "@/components/JsonLd";
 import { site } from "@/data/site";
 import { dentistSchema } from "@/lib/schema";
@@ -68,6 +67,12 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en-IN" className={`${inter.variable} ${manrope.variable}`}>
+      <head>
+        {/* Without JS the observer never runs, so nothing should stay hidden */}
+        <noscript>
+          <style>{`.wl-reveal{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
+      </head>
       <body>
         <a
           href="#main"
@@ -75,13 +80,9 @@ export default function RootLayout({ children }) {
         >
           Skip to content
         </a>
-        {/* Bottom padding clears the fixed contact bar: 64px mobile, 96px desktop */}
-        <div className="pb-22 md:pb-26">
-          <Header />
-          <main id="main">{children}</main>
-          <Footer />
-        </div>
-        <StickyContactBar />
+        <Header />
+        <main id="main">{children}</main>
+        <Footer />
         <JsonLd data={dentistSchema()} />
       </body>
     </html>

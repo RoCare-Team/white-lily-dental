@@ -13,7 +13,7 @@ export const homeFaqs = [
   },
   {
     q: "Where are your clinics located in Gurugram?",
-    a: "We have two clinics — Sector 69 (Spaze Corporate Park, Tower A, above Axis Bank) and Sector 77 (Emaar Palm Hills). Both are open Monday to Sunday, 11:00 AM to 7:30 PM.",
+    a: "We have three clinics — Sector 69 (Spaze Corporate Park, Tower A, above Axis Bank), Sector 77 (Emaar Palm Hills) and Sector 83 (Sapphire Mall). All are open Monday to Sunday, 11:00 AM to 7:30 PM.",
   },
   {
     q: "Do you offer EMI or payment plans?",
@@ -21,7 +21,7 @@ export const homeFaqs = [
   },
   {
     q: "How do I book an appointment?",
-    a: "Call or WhatsApp us on +91 97118 11272, or use the booking form on our contact page. Same-day appointments are often available at both Gurugram clinics.",
+    a: "Call or WhatsApp us on +91 97118 11272, or use the booking form on our contact page. Same-day appointments are often available at all three Gurugram clinics.",
   },
   {
     q: "What hygiene and sterilisation protocols do you follow?",

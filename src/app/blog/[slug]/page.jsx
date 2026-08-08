@@ -150,13 +150,13 @@ export default async function BlogPostPage({ params }) {
               </h2>
               <p className="mt-2 text-[14px] leading-relaxed text-muted">
                 General advice is no substitute for an examination. Book a
-                consultation at our Sector 69 or Sector 77 clinic in Gurugram and
+                consultation at any of our three Gurugram clinics and
                 get an answer specific to you.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link
                   href="/contact"
-                  className="inline-flex h-11 items-center rounded-xl bg-brand px-5 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-dark"
+                  className="inline-flex h-11 items-center rounded-xl bg-deep px-5 text-[13.5px] font-semibold text-white transition-colors hover:bg-deep-600"
                 >
                   Book Appointment
                 </Link>

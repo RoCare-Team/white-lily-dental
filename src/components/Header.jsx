@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, ChevronDown, Menu, Phone } from "lucide-react";
@@ -8,7 +9,6 @@ import { ArrowRight, ChevronDown, Menu, Phone } from "lucide-react";
 import Container from "./Container";
 import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
-import TopBar from "./TopBar";
 import { services } from "@/data/services";
 import { navLinks } from "@/data/nav";
 import { site, telHref } from "@/data/site";
@@ -59,16 +59,12 @@ export default function Header() {
   };
 
   const linkClass = (href) =>
-    `text-[16px] font-medium transition-colors ${
+    `wl-navlink text-[16px] font-medium transition-colors ${
       isActive(href) ? "text-coral" : "text-navy hover:text-coral"
     }`;
 
   return (
-    /* Sticking the whole header with a -40px offset lets the contact strip
-       scroll away while the navbar pins itself to the top. A sticky child
-       cannot escape its parent's box, so the sticky has to live here. */
-    <header className="sticky -top-10 z-50">
-      <TopBar />
+    <header className="sticky top-0 z-50">
 
       <div
         className={`relative bg-[#e8f2f8] transition-shadow duration-300 ${
@@ -109,7 +105,11 @@ export default function Header() {
                   </li>
                 ) : (
                   <li key={link.href}>
-                    <Link href={link.href} className={linkClass(link.href)}>
+                    <Link
+                      href={link.href}
+                      data-active={isActive(link.href)}
+                      className={linkClass(link.href)}
+                    >
                       {link.label}
                     </Link>
                   </li>
@@ -128,7 +128,7 @@ export default function Header() {
 
               <Link
                 href="/contact"
-                className="hidden h-[42px] items-center gap-2 rounded-full bg-brand px-7 text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-dark sm:inline-flex"
+                className="wl-sheen hidden h-[42px] items-center gap-2 rounded-full bg-deep px-7 text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600 sm:inline-flex"
               >
                 Book Appointment
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -156,43 +156,57 @@ export default function Header() {
               : "pointer-events-none invisible -translate-y-2 opacity-0"
           }`}
         >
-          <Container className="grid grid-cols-12 gap-8 py-8">
+          <Container className="grid grid-cols-12 gap-7 py-6">
+            {/* Treatments — titles only, in three tidy columns */}
             <div className="col-span-9">
-              <div className="mb-5 flex items-end justify-between border-b border-line pb-4">
-                <div>
-                  <span className="wl-eyebrow">Our Treatments</span>
-                  <h2 className="mt-2 text-xl font-bold text-navy">
-                    Complete Dental Care Under One Roof
-                  </h2>
-                </div>
+              <div className="mb-4 flex items-center justify-between">
+                <span className="wl-eyebrow">Our Treatments</span>
                 <Link
                   href="/services"
-                  className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-coral hover:text-coral-dark"
+                  className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-coral hover:text-coral-dark"
                 >
                   View all services
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </div>
 
-              <ul className="grid grid-cols-2 gap-x-6 gap-y-1">
+              <ul className="grid grid-cols-3 gap-x-3 gap-y-0.5">
                 {services.map((service) => {
                   const Icon = service.icon;
+                  const accent = service.accent || {
+                    bg: "#E8F0FC",
+                    fg: "#1668C7",
+                  };
                   return (
                     <li key={service.slug}>
                       <Link
                         href={`/services/${service.slug}`}
-                        className="group flex items-start gap-3 rounded-xl p-3 transition-colors hover:bg-brand-50"
+                        className="group flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-brand-50"
                       >
-                        <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-white text-brand transition-colors group-hover:border-brand-200 group-hover:bg-brand group-hover:text-white">
-                          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-[15px] font-semibold text-navy group-hover:text-brand">
-                            {service.menuTitle}
+                        {service.iconImage ? (
+                          <Image
+                            src={service.iconImage}
+                            alt=""
+                            width={100}
+                            height={100}
+                            aria-hidden="true"
+                            className="h-9 w-9 shrink-0"
+                          />
+                        ) : (
+                          <span
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: accent.bg }}
+                          >
+                            <Icon
+                              className="h-[18px] w-[18px]"
+                              style={{ color: accent.fg }}
+                              strokeWidth={1.7}
+                              aria-hidden="true"
+                            />
                           </span>
-                          <span className="mt-0.5 block truncate text-[14px] text-muted">
-                            {service.excerpt}
-                          </span>
+                        )}
+                        <span className="text-[15px] font-medium leading-tight text-navy transition-colors group-hover:text-brand">
+                          {service.title}
                         </span>
                       </Link>
                     </li>
@@ -201,21 +215,17 @@ export default function Header() {
               </ul>
             </div>
 
+            {/* Compact help panel */}
             <div className="col-span-3">
-              <div className="flex h-full flex-col justify-between rounded-2xl bg-deep p-6 text-white">
-                <div>
-                  <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[14px] font-semibold uppercase tracking-wider text-brand-200">
-                    Not sure what you need?
-                  </span>
-                  <h3 className="mt-4 text-lg font-bold text-white">
-                    Talk to a specialist first
-                  </h3>
-                  <p className="mt-2 text-[14.5px] leading-relaxed text-brand-100/80">
-                    Our MDS specialists will examine, explain your options and
-                    give you a written plan before any treatment begins.
-                  </p>
-                </div>
-                <div className="mt-6 space-y-2">
+              <div className="flex h-full flex-col rounded-[14px] bg-deep p-5 text-white">
+                <h3 className="text-[17px] font-bold leading-snug text-white">
+                  Not sure what you need?
+                </h3>
+                <p className="mt-2 text-[14px] leading-[1.55] text-brand-100/80">
+                  Our MDS specialists examine, explain your options and give you
+                  a written plan first.
+                </p>
+                <div className="mt-4 space-y-2">
                   <Link
                     href="/contact"
                     className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-[15px] font-semibold text-deep transition-colors hover:bg-brand-50"

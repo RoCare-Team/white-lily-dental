@@ -28,7 +28,7 @@ const sections = [
   {
     heading: "Sharing your information",
     paragraphs: [
-      "Clinical information is accessible to the treating dentists and clinical staff at both our Gurugram clinics so that you can be seen at either location.",
+      "Clinical information is accessible to the treating dentists and clinical staff at all three of our Gurugram clinics so that you can be seen at either location.",
       "We may share information with a dental laboratory, imaging centre or specialist when it is necessary for your treatment, and with regulatory or legal authorities where the law requires it.",
     ],
   },
@@ -75,7 +75,7 @@ export default function PrivacyPolicyPage() {
           <div className="mx-auto max-w-3xl">
             <p className="text-[15px] leading-[1.85] text-muted">
               This policy applies to {site.name} and to both of our clinics in
-              Gurugram — Sector 69 and Sector 77 — as well as to this website.
+              Gurugram — Sector 69, 77 and 83 — as well as to this website.
             </p>
 
             {sections.map((section) => (

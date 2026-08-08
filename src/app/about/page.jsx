@@ -18,7 +18,7 @@ import { breadcrumbSchema } from "@/lib/schema";
 export const metadata = {
   title: "About Us | Multi-Specialist Dental Clinic in Gurugram",
   description:
-    "Learn about White Lily Dental — a multi-specialist dental chain in Gurugram with 21+ years of experience, MDS specialists and advanced technology across Sector 69 and Sector 77.",
+    "Learn about White Lily Dental — a multi-specialist dental chain in Gurugram with 21+ years of experience, MDS specialists and advanced technology across Sector 69, 77 and 83.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About White Lily Dental | Gurugram",
@@ -49,7 +49,7 @@ const values = [
   {
     icon: Award,
     title: "Consistent standards",
-    desc: "Both Gurugram clinics run the same protocols, the same sterilisation standard and the same specialist team.",
+    desc: "All three Gurugram clinics run the same protocols, the same sterilisation standard and the same specialist team.",
   },
 ];
 
@@ -67,7 +67,7 @@ export default function AboutPage() {
     <>
       <PageHero
         title="A Multi-Specialist Dental Chain Built Around Gurugram Families"
-        subtitle="White Lily Dental brings specialist dentistry, modern technology and honest treatment planning to two clinics in Gurugram — Sector 69 and Sector 77."
+        subtitle="White Lily Dental brings specialist dentistry, modern technology and honest treatment planning to three clinics in Gurugram — Sector 69, 77 and 83."
         breadcrumbs={[{ name: "About Us", href: "/about" }]}
       />
 
@@ -77,7 +77,7 @@ export default function AboutPage() {
           <div className="relative">
             <div className="relative aspect-4/3 overflow-hidden rounded-[18px] border border-line shadow-[0_36px_70px_-42px_rgba(10,37,64,0.5)]">
               <Image
-                src="https://images.unsplash.com/photo-1600170311833-c2cf5280ce49?auto=format&fit=crop&w=1200&q=80"
+                src="https://images.unsplash.com/photo-1643660527098-559f89e45a92?auto=format&fit=crop&w=1200&q=80"
                 alt="Interior of the White Lily Dental clinic in Gurugram with modern dental equipment"
                 fill
                 priority
@@ -136,7 +136,7 @@ export default function AboutPage() {
           <SectionHeading
             eyebrow="How We Work"
             title="What Guides Every Treatment We Plan"
-            subtitle="Four principles that shape how we diagnose, explain and deliver dental care at both Gurugram clinics."
+            subtitle="Four principles that shape how we diagnose, explain and deliver dental care at all three Gurugram clinics."
           />
 
           <ul className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
   if (!doctor) return { title: "Doctor Not Found" };
 
   const title = `${doctor.name} — ${doctor.qualification}`;
-  const description = `${doctor.name}, ${doctor.qualification}, treats patients at White Lily Dental's Sector 69 and Sector 77 clinics in Gurugram. ${doctor.bio}`;
+  const description = `${doctor.name}, ${doctor.qualification}, treats patients at White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram. ${doctor.bio}`;
 
   return {
     title,
@@ -167,7 +167,7 @@ export default async function DoctorPage({ params }) {
                 align="left"
                 eyebrow="Treatments"
                 title={`Treatments by ${doctor.name}`}
-                subtitle="Book directly for any of these treatments at the Sector 69 or Sector 77 clinic."
+                subtitle="Book directly for any of these treatments at any of our three Gurugram clinics."
               />
               <Link
                 href="/services"

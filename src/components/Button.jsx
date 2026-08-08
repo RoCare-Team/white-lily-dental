@@ -5,7 +5,7 @@ const base =
 
 const variants = {
   primary:
-    "bg-brand text-white shadow-[0_10px_24px_-12px_rgba(22,104,199,0.9)] hover:bg-brand-dark hover:shadow-[0_16px_30px_-12px_rgba(15,79,156,0.75)] hover:-translate-y-0.5",
+    "bg-deep text-white shadow-[0_10px_24px_-12px_rgba(7,83,107,0.85)] hover:bg-deep-600 hover:shadow-[0_16px_30px_-12px_rgba(6,68,87,0.7)] hover:-translate-y-0.5",
   outline:
     "border border-line bg-white text-navy hover:border-brand-200 hover:bg-brand-50 hover:-translate-y-0.5",
   coral:

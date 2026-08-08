@@ -2,6 +2,7 @@ import Image from "next/image";
 import { CalendarCheck, Phone, Check } from "lucide-react";
 
 import Container from "./Container";
+import Reveal from "./Reveal";
 import Button from "./Button";
 import { telHref } from "@/data/site";
 
@@ -16,12 +17,12 @@ export default function NewPatients() {
   return (
     <section className="wl-section-sm" aria-labelledby="new-patients-heading">
       <Container>
-        <div className="overflow-hidden rounded-[16px] border border-line bg-brand-50/50">
+        <Reveal variant="scale" className="overflow-hidden rounded-[16px] border border-line bg-brand-50/50">
           <div className="grid grid-cols-1 lg:grid-cols-2">
             {/* Image — capped so it never stretches the section */}
             <div className="relative h-56 sm:h-72 lg:h-auto lg:min-h-90">
               <Image
-                src="https://images.unsplash.com/photo-1526560244950-1a3c1ace48f9?auto=format&fit=crop&w=1200&q=80"
+                src="https://images.unsplash.com/photo-1497486443155-158cceb6629a?auto=format&fit=crop&w=1200&q=80"
                 alt="Family smiling together after a dental check-up at White Lily Dental Gurugram"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -73,7 +74,7 @@ export default function NewPatients() {
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </Container>
     </section>
   );
