@@ -17,7 +17,7 @@ export const metadata = {
       "Explore all dental treatments offered at White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram.",
     url: "/services",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

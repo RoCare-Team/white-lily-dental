@@ -28,7 +28,7 @@ export const metadata = {
       "Braces, dental implants, root canals, cosmetic dentistry and preventive care by MDS specialists at our Sector 69, 77 and 83 clinics in Gurugram.",
     url: "/",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

@@ -17,7 +17,7 @@ export const metadata = {
       "MDS-qualified orthodontist, prosthodontist and oral surgeon treating patients at our Sector 69, 77 and 83 clinics.",
     url: "/doctors",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

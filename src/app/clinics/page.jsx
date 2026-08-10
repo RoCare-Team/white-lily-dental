@@ -21,7 +21,7 @@ export const metadata = {
       "Three fully equipped dental clinics in Gurugram — Sector 69, 77 and 83 — open all seven days.",
     url: "/clinics",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

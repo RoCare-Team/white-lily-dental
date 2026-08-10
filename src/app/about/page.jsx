@@ -26,7 +26,7 @@ export const metadata = {
       "A multi-specialist dental chain in Gurugram with MDS specialists across orthodontics, prosthodontics, implantology and oral surgery.",
     url: "/about",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

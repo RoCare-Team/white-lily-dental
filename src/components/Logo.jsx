@@ -15,7 +15,7 @@ export default function Logo({ variant = "dark", className = "" }) {
       } ${className}`}
     >
       <Image
-        src="/KLiw-logo.webp"
+        src="/images/KLiw-logo.webp"
         alt="White Lily Dental"
         width={400}
         height={150}

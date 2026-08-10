@@ -21,7 +21,7 @@ export const metadata = {
       "Articles on braces, implants, gum health and preventive dentistry written by our MDS specialists.",
     url: "/blog",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

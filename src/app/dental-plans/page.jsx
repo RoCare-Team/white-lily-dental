@@ -17,7 +17,7 @@ export const metadata = {
       "Prepaid family dental plans covering consultations, X-rays and professional cleaning at all three Gurugram clinics.",
     url: "/dental-plans",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

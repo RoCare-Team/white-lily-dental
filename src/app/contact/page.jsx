@@ -22,7 +22,7 @@ export const metadata = {
       "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram.",
     url: "/contact",
     type: "website",
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
 };
 

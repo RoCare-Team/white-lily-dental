@@ -39,7 +39,7 @@ export const metadata = {
     description: site.intro,
     images: [
       {
-        url: "/og-image.png",
+        url: "/images/og-image.png",
         width: 1200,
         height: 630,
         alt: "White Lily Dental — advanced dental care in Gurugram",
@@ -50,7 +50,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "White Lily Dental | Best Dental Clinic in Gurugram",
     description: site.intro,
-    images: ["/og-image.png"],
+    images: ["/images/og-image.png"],
   },
   robots: {
     index: true,
