@@ -84,6 +84,7 @@ export default function ClinicsSection({ className = "" }) {
             </Reveal>
           ))}
         </ul>
+        
       </Container>
     </section>
   );
