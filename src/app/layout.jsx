@@ -4,7 +4,14 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
-import { site } from "@/data/site";
+import SiteChrome from "@/components/SiteChrome";
+import {
+  getClinics,
+  getContactLinks,
+  getNavigation,
+  getServices,
+  getSettings,
+} from "@/lib/content";
 import { dentistSchema } from "@/lib/schema";
 
 const inter = Inter({
@@ -19,44 +26,47 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
-export const metadata = {
-  metadataBase: new URL(site.url),
-  title: {
-    default:
-      "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 77",
-    template: "%s | White Lily Dental Gurugram",
-  },
-  description: site.intro,
-  applicationName: site.name,
-  authors: [{ name: site.name }],
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    locale: "en_IN",
-    url: site.url,
-    siteName: site.name,
-    title: "White Lily Dental | Best Dental Clinic in Gurugram",
+export async function generateMetadata() {
+  const site = await getSettings();
+  return {
+    metadataBase: new URL(site.url),
+    title: {
+      default:
+        "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 77",
+      template: "%s | White Lily Dental Gurugram",
+    },
     description: site.intro,
-    images: [
-      {
-        url: "/images/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "White Lily Dental — advanced dental care in Gurugram",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "White Lily Dental | Best Dental Clinic in Gurugram",
-    description: site.intro,
-    images: ["/images/og-image.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+    applicationName: site.name,
+    authors: [{ name: site.name }],
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      locale: "en_IN",
+      url: site.url,
+      siteName: site.name,
+      title: "White Lily Dental | Best Dental Clinic in Gurugram",
+      description: site.intro,
+      images: [
+        {
+          url: "/images/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: "White Lily Dental — advanced dental care in Gurugram",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "White Lily Dental | Best Dental Clinic in Gurugram",
+      description: site.intro,
+      images: ["/images/og-image.png"],
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+}
 
 export const viewport = {
   themeColor: "#07536b",
@@ -64,7 +74,14 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const [services, navigation, clinics, { settings, telHref }] = await Promise.all([
+    getServices(),
+    getNavigation(),
+    getClinics(),
+    getContactLinks(),
+  ]);
+
   return (
     <html lang="en-IN" className={`${inter.variable} ${manrope.variable}`}>
       <head>
@@ -80,10 +97,19 @@ export default function RootLayout({ children }) {
         >
           Skip to content
         </a>
-        <Header />
+        <SiteChrome>
+          <Header
+            services={services}
+            navLinks={navigation.navLinks ?? []}
+            site={settings}
+            telHref={telHref}
+          />
+        </SiteChrome>
         <main id="main">{children}</main>
-        <Footer />
-        <JsonLd data={dentistSchema()} />
+        <SiteChrome>
+          <Footer />
+          <JsonLd data={dentistSchema(settings, clinics)} />
+        </SiteChrome>
       </body>
     </html>
   );

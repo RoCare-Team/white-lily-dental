@@ -1,10 +1,13 @@
-import { site } from "@/data/site";
-import { services } from "@/data/services";
-import { doctors } from "@/data/doctors";
-import { posts } from "@/data/blog";
+import { getDoctors, getPosts, getServices, getSettings } from "@/lib/content";
 
-export default function sitemap() {
+export default async function sitemap() {
   const now = new Date();
+  const [site, services, doctors, posts] = await Promise.all([
+    getSettings(),
+    getServices(),
+    getDoctors(),
+    getPosts(),
+  ]);
 
   const staticRoutes = [
     { path: "/", priority: 1 },

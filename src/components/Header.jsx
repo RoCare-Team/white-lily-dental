@@ -9,11 +9,9 @@ import { ArrowRight, ChevronDown, Menu, Phone } from "lucide-react";
 import Container from "./Container";
 import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
-import { services } from "@/data/services";
-import { navLinks } from "@/data/nav";
-import { site, telHref } from "@/data/site";
+import { getIcon } from "@/lib/icons";
 
-export default function Header() {
+export default function Header({ services, navLinks, site, telHref }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
@@ -172,7 +170,7 @@ export default function Header() {
 
               <ul className="grid grid-cols-3 gap-x-3 gap-y-0.5">
                 {services.map((service) => {
-                  const Icon = service.icon;
+                  const Icon = getIcon(service.icon);
                   const accent = service.accent || {
                     bg: "#E8F0FC",
                     fg: "#1668C7",
@@ -246,7 +244,14 @@ export default function Header() {
         </div>
       </div>
 
-      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <MobileMenu
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        services={services}
+        navLinks={navLinks}
+        site={site}
+        telHref={telHref}
+      />
     </header>
   );
 }

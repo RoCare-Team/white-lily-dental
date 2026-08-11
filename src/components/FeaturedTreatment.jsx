@@ -4,8 +4,7 @@ import { ArrowRight, CalendarCheck, Check, Phone } from "lucide-react";
 
 import Container from "./Container";
 import Reveal from "./Reveal";
-import { telHref } from "@/data/site";
-import { doctors } from "@/data/doctors";
+import { getContactLinks, getDoctors } from "@/lib/content";
 
 const benefits = [
   "Improved appearance",
@@ -26,11 +25,13 @@ const PATTERN = {
   opacity: 0.05,
 };
 
-/* The implantologist on the team, read from the doctors data */
-const implantologist =
-  doctors.find((d) => /implantolog/i.test(d.qualification)) || doctors[0];
+/* The implantologist on the team, read from the doctors content */
+const pickImplantologist = (doctors) =>
+  doctors.find((d) => /implantolog/i.test(d.qualification ?? "")) || doctors[0];
 
-export default function FeaturedTreatment() {
+export default async function FeaturedTreatment() {
+  const [{ telHref }, doctors] = await Promise.all([getContactLinks(), getDoctors()]);
+  const implantologist = pickImplantologist(doctors);
   return (
     <section
       className="relative overflow-hidden bg-deep"

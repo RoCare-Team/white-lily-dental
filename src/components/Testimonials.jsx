@@ -3,8 +3,7 @@ import { Quote, Star, ArrowUpRight } from "lucide-react";
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
 import Reveal from "./Reveal";
-import { testimonials } from "@/data/testimonials";
-import { site } from "@/data/site";
+import { getSettings, getTestimonials } from "@/lib/content";
 
 /* Same molecular texture as the hero, so the two dark bands feel related */
 const PATTERN = {
@@ -33,7 +32,8 @@ function Stars({ rating }) {
   );
 }
 
-export default function Testimonials() {
+export default async function Testimonials() {
+  const [testimonials, site] = await Promise.all([getTestimonials(), getSettings()]);
   /* Three reviews only — this section is a proof point, not a reading list */
   const featured = testimonials.slice(0, 3);
 

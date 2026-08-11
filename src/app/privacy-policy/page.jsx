@@ -1,6 +1,6 @@
 ﻿import Container from "@/components/Container";
 import PageHero from "@/components/PageHero";
-import { site } from "@/data/site";
+import { getSettings } from "@/lib/content";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -10,7 +10,7 @@ export const metadata = {
   robots: { index: true, follow: true },
 };
 
-const sections = [
+const buildSections = (site) => [
   {
     heading: "Information we collect",
     paragraphs: [
@@ -61,7 +61,9 @@ const sections = [
   },
 ];
 
-export default function PrivacyPolicyPage() {
+export default async function PrivacyPolicyPage() {
+  const site = await getSettings();
+  const sections = buildSections(site);
   return (
     <>
       <PageHero

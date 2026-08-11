@@ -13,18 +13,26 @@ import CTASection from "@/components/CTASection";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
 
-import { getService, getSubService, subServiceParams } from "@/data/services";
-import { site, telHref } from "@/data/site";
+import {
+  getClinics,
+  getContactLinks,
+  getService,
+  getSubService,
+  getSubServiceParams,
+} from "@/lib/content";
 import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
+import { getIcon } from "@/lib/icons";
 
-export function generateStaticParams() {
-  return subServiceParams;
+export async function generateStaticParams() {
+  return getSubServiceParams();
 }
 
 export async function generateMetadata({ params }) {
   const { slug, sub } = await params;
-  const service = getService(slug);
-  const subService = getSubService(slug, sub);
+  const [service, subService] = await Promise.all([
+    getService(slug),
+    getSubService(slug, sub),
+  ]);
 
   if (!service || !subService) return { title: "Treatment Not Found" };
 
@@ -52,13 +60,20 @@ export async function generateMetadata({ params }) {
 
 export default async function SubServicePage({ params }) {
   const { slug, sub } = await params;
-  const service = getService(slug);
-  const subService = getSubService(slug, sub);
+  const [service, subService] = await Promise.all([
+    getService(slug),
+    getSubService(slug, sub),
+  ]);
 
   if (!service || !subService) notFound();
 
-  const Icon = service.icon;
-  const siblings = service.subServices.filter((s) => s.slug !== sub);
+  const [clinics, { settings: site, telHref }] = await Promise.all([
+    getClinics(),
+    getContactLinks(),
+  ]);
+
+  const Icon = getIcon(service.icon);
+  const siblings = (service.subServices ?? []).filter((s) => s.slug !== sub);
 
   const crumbs = [
     { name: "Home", href: "/" },
@@ -159,7 +174,12 @@ export default async function SubServicePage({ params }) {
 
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-28">
-              <ServiceEnquiryForm treatment={subService.name} />
+              <ServiceEnquiryForm
+                treatment={subService.name}
+                clinics={clinics}
+                site={site}
+                telHref={telHref}
+              />
             </div>
           </aside>
         </Container>
@@ -222,7 +242,7 @@ export default async function SubServicePage({ params }) {
 
       <ClinicsSection />
 
-      <JsonLd data={serviceSchema({ ...service, title: subService.name, slug: `${slug}/${sub}`, seoDescription: subService.seoDescription })} />
+      <JsonLd data={serviceSchema({ ...service, title: subService.name, slug: `${slug}/${sub}`, seoDescription: subService.seoDescription }, site)} />
       <JsonLd data={breadcrumbSchema(crumbs)} />
     </>
   );

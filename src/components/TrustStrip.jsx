@@ -2,12 +2,10 @@ import { Award, CalendarClock, MapPin, Stethoscope } from "lucide-react";
 
 import Container from "./Container";
 import Reveal from "./Reveal";
-import { site } from "@/data/site";
-import { clinics } from "@/data/clinics";
-import { doctors } from "@/data/doctors";
+import { getClinics, getDoctors, getSettings } from "@/lib/content";
 
-/* Every figure is read from project data, never hard-coded */
-const items = [
+/* Every figure is read from live content, never hard-coded */
+const buildItems = (site, clinics, doctors) => [
   {
     icon: Award,
     value: site.yearsExperience,
@@ -30,7 +28,13 @@ const items = [
   },
 ];
 
-export default function TrustStrip() {
+export default async function TrustStrip() {
+  const [site, clinics, doctors] = await Promise.all([
+    getSettings(),
+    getClinics(),
+    getDoctors(),
+  ]);
+  const items = buildItems(site, clinics, doctors);
   return (
     <section className="border-b border-line bg-white" aria-label="Why patients trust us">
       <Container>

@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
+import { getIcon } from "@/lib/icons";
+
 /**
  * variant="card" → full tile with a one-line excerpt (slider, related treatments)
  * variant="grid" → compact tile, title only (dense grid on /services)
@@ -10,7 +12,7 @@ import { ArrowUpRight } from "lucide-react";
  * mark, a circular arrow that fills on hover, and an accent-tinted lift.
  */
 export default function ServiceCard({ service, variant = "card" }) {
-  const Icon = service.icon;
+  const Icon = getIcon(service.icon);
   const accent = service.accent || { bg: "#E8F0FC", fg: "#1668C7" };
   const isGrid = variant === "grid";
 

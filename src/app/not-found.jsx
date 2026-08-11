@@ -3,15 +3,18 @@ import { ArrowRight, Home, Phone } from "lucide-react";
 
 import Container from "@/components/Container";
 import Button from "@/components/Button";
-import { services } from "@/data/services";
-import { site, telHref } from "@/data/site";
+import { getContactLinks, getServices } from "@/lib/content";
 
 export const metadata = {
   title: "Page Not Found",
   robots: { index: false, follow: true },
 };
 
-export default function NotFound() {
+export default async function NotFound() {
+  const [{ settings: site, telHref }, services] = await Promise.all([
+    getContactLinks(),
+    getServices(),
+  ]);
   return (
     <section className="wl-section">
       <Container className="flex flex-col items-center text-center">

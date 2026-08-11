@@ -16,17 +16,24 @@ import CTASection from "@/components/CTASection";
 import Reveal from "@/components/Reveal";
 import JsonLd from "@/components/JsonLd";
 
-import { services, getService, getRelatedServices } from "@/data/services";
-import { site, telHref } from "@/data/site";
+import {
+  getContactLinks,
+  getClinics,
+  getRelatedServices,
+  getService,
+  getServices,
+} from "@/lib/content";
 import { breadcrumbSchema, faqSchema, serviceSchema } from "@/lib/schema";
+import { getIcon } from "@/lib/icons";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const services = await getServices();
   return services.map((service) => ({ slug: service.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const service = getService(slug);
+  const service = await getService(slug);
 
   if (!service) return { title: "Service Not Found" };
 
@@ -54,12 +61,16 @@ export async function generateMetadata({ params }) {
 
 export default async function ServicePage({ params }) {
   const { slug } = await params;
-  const service = getService(slug);
+  const service = await getService(slug);
 
   if (!service) notFound();
 
-  const Icon = service.icon;
-  const related = getRelatedServices(slug);
+  const Icon = getIcon(service.icon);
+  const [related, clinics, { settings: site, telHref }] = await Promise.all([
+    getRelatedServices(slug),
+    getClinics(),
+    getContactLinks(),
+  ]);
 
   const crumbs = [
     { name: "Home", href: "/" },
@@ -152,7 +163,12 @@ export default async function ServicePage({ params }) {
 
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-28">
-              <ServiceEnquiryForm treatment={service.title} />
+              <ServiceEnquiryForm
+                treatment={service.title}
+                clinics={clinics}
+                site={site}
+                telHref={telHref}
+              />
             </div>
           </aside>
         </Container>
@@ -210,7 +226,7 @@ export default async function ServicePage({ params }) {
 
       <ClinicsSection />
 
-      <JsonLd data={serviceSchema(service)} />
+      <JsonLd data={serviceSchema(service, site)} />
       <JsonLd data={breadcrumbSchema(crumbs)} />
       <JsonLd data={faqSchema(service.faqs)} />
     </>

@@ -4,8 +4,7 @@ import { ArrowRight, CalendarCheck, Check, Phone } from "lucide-react";
 
 import Container from "./Container";
 import Reveal from "./Reveal";
-import { telHref } from "@/data/site";
-import { associations } from "@/data/associations";
+import { getAssociations, getContactLinks } from "@/lib/content";
 
 const benefits = ["Invisible", "No wires, no discomfort", "No pain", "Removable"];
 
@@ -15,10 +14,15 @@ const PHOTO_ALT =
   "Clear invisible aligner trays in their case at White Lily Dental, Gurugram";
 
 /* Pulled from the associations we actually list */
-const provider =
-  associations.find((a) => /invisalign/i.test(a.name)) || associations[0];
+const pickProvider = (associations) =>
+  associations.find((a) => /invisalign/i.test(a.name ?? "")) || associations[0];
 
-export default function InvisibleAligners() {
+export default async function InvisibleAligners() {
+  const [{ telHref }, associations] = await Promise.all([
+    getContactLinks(),
+    getAssociations(),
+  ]);
+  const provider = pickProvider(associations);
   return (
     <section className="wl-section bg-white" aria-labelledby="aligners-heading">
       <Container className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">

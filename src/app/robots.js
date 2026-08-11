@@ -1,8 +1,9 @@
-import { site } from "@/data/site";
+import { getSettings } from "@/lib/content";
 
-export default function robots() {
+export default async function robots() {
+  const site = await getSettings();
   return {
-    rules: [{ userAgent: "*", allow: "/" }],
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/admin", "/api/"] }],
     sitemap: `${site.url}/sitemap.xml`,
     host: site.url,
   };

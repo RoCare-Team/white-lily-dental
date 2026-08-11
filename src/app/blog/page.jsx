@@ -7,7 +7,7 @@ import PageHero from "@/components/PageHero";
 import CTASection from "@/components/CTASection";
 import JsonLd from "@/components/JsonLd";
 
-import { posts } from "@/data/blog";
+import { getPostsByDate } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata = {
@@ -25,8 +25,8 @@ export const metadata = {
   },
 };
 
-export default function BlogPage() {
-  const [featured, ...rest] = posts;
+export default async function BlogPage() {
+  const [featured, ...rest] = await getPostsByDate();
 
   return (
     <>

@@ -5,9 +5,10 @@ import { Clock, MapPin, Navigation, Phone } from "lucide-react";
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
 import Reveal from "./Reveal";
-import { clinics } from "@/data/clinics";
+import { getClinics } from "@/lib/content";
 
-export default function ClinicsSection({ className = "" }) {
+export default async function ClinicsSection({ className = "" }) {
+  const clinics = await getClinics();
   return (
     <section className={`wl-section ${className}`} aria-labelledby="clinics-heading">
       <Container>

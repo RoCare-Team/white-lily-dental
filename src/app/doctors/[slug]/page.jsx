@@ -19,18 +19,22 @@ import ClinicsSection from "@/components/ClinicsSection";
 import CTASection from "@/components/CTASection";
 import JsonLd from "@/components/JsonLd";
 
-import { doctors, getDoctor } from "@/data/doctors";
-import { getService } from "@/data/services";
-import { site, telHref } from "@/data/site";
+import {
+  getContactLinks,
+  getDoctor,
+  getDoctors,
+  getService,
+} from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const doctors = await getDoctors();
   return doctors.map((doctor) => ({ slug: doctor.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const doctor = getDoctor(slug);
+  const doctor = await getDoctor(slug);
 
   if (!doctor) return { title: "Doctor Not Found" };
 
@@ -53,11 +57,16 @@ export async function generateMetadata({ params }) {
 
 export default async function DoctorPage({ params }) {
   const { slug } = await params;
-  const doctor = getDoctor(slug);
+  const doctor = await getDoctor(slug);
 
   if (!doctor) notFound();
 
-  const doctorServices = doctor.services.map(getService).filter(Boolean);
+  const [doctorServices, { settings: site, telHref }] = await Promise.all([
+    Promise.all((doctor.services ?? []).map(getService)).then((list) =>
+      list.filter(Boolean)
+    ),
+    getContactLinks(),
+  ]);
 
   const personSchema = {
     "@context": "https://schema.org",

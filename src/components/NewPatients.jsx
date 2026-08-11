@@ -4,7 +4,7 @@ import { CalendarCheck, Phone, Check } from "lucide-react";
 import Container from "./Container";
 import Reveal from "./Reveal";
 import Button from "./Button";
-import { telHref } from "@/data/site";
+import { getContactLinks } from "@/lib/content";
 
 const points = [
   "Full examination and digital X-rays",
@@ -13,7 +13,8 @@ const points = [
   "Same-day appointments often available",
 ];
 
-export default function NewPatients() {
+export default async function NewPatients() {
+  const { telHref } = await getContactLinks();
   return (
     <section className="wl-section-sm" aria-labelledby="new-patients-heading">
       <Container>

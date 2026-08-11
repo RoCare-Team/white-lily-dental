@@ -2,14 +2,15 @@
 import SectionHeading from "./SectionHeading";
 import DoctorCard from "./DoctorCard";
 import Reveal from "./Reveal";
-import { doctors } from "@/data/doctors";
+import { getDoctors } from "@/lib/content";
 
-export default function DoctorsSection({
+export default async function DoctorsSection({
   eyebrow = "Our Specialists",
   title = "Meet Our Doctors",
   subtitle = "Every treatment at White Lily Dental is planned and performed by an MDS-qualified specialist in that field.",
   className = "",
 }) {
+  const doctors = await getDoctors();
   return (
     <section className={`wl-section ${className}`} aria-labelledby="doctors-heading">
       <Container>

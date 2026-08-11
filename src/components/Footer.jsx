@@ -12,10 +12,7 @@ import {
 
 import Container from "./Container";
 import Logo from "./Logo";
-import { services } from "@/data/services";
-import { clinics } from "@/data/clinics";
-import { quickLinks } from "@/data/nav";
-import { site, telHref } from "@/data/site";
+import { getClinics, getContactLinks, getNavigation, getServices } from "@/lib/content";
 
 const socialIcons = {
   Facebook,
@@ -30,7 +27,15 @@ const linkClass =
 const headingClass =
   "text-[13px] font-bold uppercase tracking-[0.16em] text-white";
 
-export default function Footer() {
+export default async function Footer() {
+  const [services, clinics, navigation, { settings: site, telHref }] =
+    await Promise.all([
+      getServices(),
+      getClinics(),
+      getNavigation(),
+      getContactLinks(),
+    ]);
+  const quickLinks = navigation.quickLinks ?? [];
   const year = new Date().getFullYear();
 
   return (

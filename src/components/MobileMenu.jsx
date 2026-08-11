@@ -7,11 +7,19 @@ import { CalendarCheck, ChevronDown, Mail, MapPin, Phone, X } from "lucide-react
 
 import Logo from "./Logo";
 import Button from "./Button";
-import { services } from "@/data/services";
-import { navLinks } from "@/data/nav";
-import { site, telHref, waHref } from "@/data/site";
+import { getIcon } from "@/lib/icons";
 
-export default function MobileMenu({ open, onClose }) {
+export default function MobileMenu({
+  open,
+  onClose,
+  services,
+  navLinks,
+  site,
+  telHref,
+}) {
+  const waHref = `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(
+    "Hello White Lily Dental, I would like to book a dental appointment."
+  )}`;
   const pathname = usePathname();
   const [servicesOpen, setServicesOpen] = useState(false);
 
@@ -101,7 +109,7 @@ export default function MobileMenu({ open, onClose }) {
                           </Link>
                         </li>
                         {services.map((service) => {
-                          const Icon = service.icon;
+                          const Icon = getIcon(service.icon);
                           return (
                             <li key={service.slug}>
                               <Link

@@ -6,8 +6,7 @@ import Container from "@/components/Container";
 import SectionHeading from "@/components/SectionHeading";
 import JsonLd from "@/components/JsonLd";
 
-import { clinics } from "@/data/clinics";
-import { site } from "@/data/site";
+import { getClinics, getSettings } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata = {
@@ -48,7 +47,8 @@ const clinicFaqs = [
   },
 ];
 
-export default function ClinicsPage() {
+export default async function ClinicsPage() {
+  const [clinics, site] = await Promise.all([getClinics(), getSettings()]);
   return (
     <>
       <PageHero

@@ -1,8 +1,9 @@
 ﻿import Container from "./Container";
 import Reveal from "./Reveal";
-import { associations } from "@/data/associations";
+import { getAssociations } from "@/lib/content";
 
-export default function Associations() {
+export default async function Associations() {
+  const associations = await getAssociations();
   return (
     <section className="wl-section-sm border-y border-line bg-white" aria-labelledby="associations-heading">
       <Container>

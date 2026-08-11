@@ -7,8 +7,12 @@ import AppointmentForm from "@/components/AppointmentForm";
 import FAQ from "@/components/FAQ";
 import JsonLd from "@/components/JsonLd";
 
-import { clinics } from "@/data/clinics";
-import { site, telHref, waHref } from "@/data/site";
+import {
+  getClinics,
+  getContactLinks,
+  getPlans,
+  getServices,
+} from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata = {
@@ -45,7 +49,14 @@ const contactFaqs = [
   },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const [clinics, services, plans, { settings: site, telHref, waHref }] =
+    await Promise.all([
+      getClinics(),
+      getServices(),
+      getPlans(),
+      getContactLinks(),
+    ]);
   return (
     <>
       <PageHero
@@ -65,7 +76,12 @@ export default function ContactPage() {
                 <div className="h-[560px] rounded-[18px] border border-line bg-brand-50/40" />
               }
             >
-              <AppointmentForm />
+              <AppointmentForm
+                services={services}
+                clinics={clinics}
+                plans={plans}
+                site={site}
+              />
             </Suspense>
           </div>
 

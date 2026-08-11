@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, MessageCircle, Phone } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, MessageCircle, Phone } from "lucide-react";
 
-import { clinics } from "@/data/clinics";
-import { site, telHref } from "@/data/site";
+
 
 const field =
   "h-11 w-full rounded-[10px] border border-line bg-white px-3.5 text-[15px] text-navy outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15";
@@ -12,19 +11,25 @@ const field =
 const label = "mb-1.5 block text-[13.5px] font-semibold text-navy";
 
 /** Compact enquiry form for the service page sidebar. */
-export default function ServiceEnquiryForm({ treatment }) {
+export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }) {
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
     clinic: clinics[0].shortName,
     message: "",
+    company: "", // honeypot — real patients never see or fill this
   });
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setBusy(true);
+    setError("");
+
     const text = [
       `Appointment request — ${treatment}`,
       `Name: ${form.name}`,
@@ -35,12 +40,40 @@ export default function ServiceEnquiryForm({ treatment }) {
       .filter(Boolean)
       .join("\n");
 
-    window.open(
+    // Opened synchronously — a tab opened after an await is blocked as a popup.
+    const waTab = window.open(
       `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`,
       "_blank",
       "noopener"
     );
-    setSent(true);
+
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, treatment, source: "service-enquiry" }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(
+          data.error ??
+            "We could not save your request — please send the WhatsApp message so we still receive it."
+        );
+      }
+    } catch {
+      setError(
+        "We could not reach our server — please send the WhatsApp message so we still receive your request."
+      );
+    } finally {
+      if (!waTab) {
+        setError(
+          "Your browser blocked the WhatsApp window. Please allow pop-ups, or call us directly."
+        );
+      }
+      setBusy(false);
+      setSent(true);
+    }
   };
 
   return (
@@ -121,12 +154,30 @@ export default function ServiceEnquiryForm({ treatment }) {
         </div>
       </div>
 
+      {/* Honeypot — hidden from patients and screen readers, bots fill it in. */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+        <label htmlFor="sf-company">Company</label>
+        <input
+          id="sf-company"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={form.company}
+          onChange={update("company")}
+        />
+      </div>
+
       <button
         type="submit"
-        className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[11px] bg-deep text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600"
+        disabled={busy}
+        className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[11px] bg-deep text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
-        Send Request
+        {busy ? (
+          <Loader2 className="h-4.5 w-4.5 animate-spin" aria-hidden="true" />
+        ) : (
+          <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
+        )}
+        {busy ? "Sending…" : "Send Request"}
       </button>
 
       <a
@@ -137,7 +188,20 @@ export default function ServiceEnquiryForm({ treatment }) {
         {site.phoneDisplay}
       </a>
 
-      {sent ? (
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-coral/40 bg-coral-50 p-3.5 text-[14px] leading-relaxed text-navy"
+        >
+          <AlertCircle
+            className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral-dark"
+            aria-hidden="true"
+          />
+          {error}
+        </p>
+      ) : null}
+
+      {sent && !error ? (
         <p
           role="status"
           className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-coral/30 bg-coral-50 p-3.5 text-[14px] leading-relaxed text-navy"
@@ -146,7 +210,7 @@ export default function ServiceEnquiryForm({ treatment }) {
             className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral"
             aria-hidden="true"
           />
-          Opened in WhatsApp — send the message and we&rsquo;ll confirm your slot.
+          Request received — send the WhatsApp message and we&rsquo;ll confirm your slot.
         </p>
       ) : null}
     </form>

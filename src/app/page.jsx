@@ -13,7 +13,7 @@ import FAQ from "@/components/FAQ";
 import CTASection from "@/components/CTASection";
 import JsonLd from "@/components/JsonLd";
 
-import { homeFaqs } from "@/data/faqs";
+import { getHomeFaqs, getServices } from "@/lib/content";
 import { faqSchema } from "@/lib/schema";
 
 export const metadata = {
@@ -32,12 +32,13 @@ export const metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [homeFaqs, services] = await Promise.all([getHomeFaqs(), getServices()]);
   return (
     <>
       <Hero />
       <TrustStrip />
-      <ServicesSlider />
+      <ServicesSlider items={services} />
       <FeaturedTreatment />
       <InvisibleAligners />
       <WhyChooseUs />

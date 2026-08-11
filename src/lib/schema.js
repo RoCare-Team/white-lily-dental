@@ -1,7 +1,14 @@
-import { site } from "@/data/site";
-import { clinics } from "@/data/clinics";
+import { site as staticSite } from "@/data/site";
+import { clinics as staticClinics } from "@/data/clinics";
 
-export function dentistSchema() {
+/**
+ * Structured data builders.
+ *
+ * Each takes the live site settings so edits made in the admin panel reach
+ * search engines too; they fall back to the built-in values when a caller has
+ * not loaded settings yet.
+ */
+export function dentistSchema(site = staticSite, clinics = staticClinics) {
   return {
     "@context": "https://schema.org",
     "@type": "Dentist",
@@ -48,7 +55,7 @@ export function dentistSchema() {
   };
 }
 
-export function breadcrumbSchema(items) {
+export function breadcrumbSchema(items, site = staticSite) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -73,7 +80,7 @@ export function faqSchema(faqs) {
   };
 }
 
-export function serviceSchema(service) {
+export function serviceSchema(service, site = staticSite) {
   return {
     "@context": "https://schema.org",
     "@type": "MedicalProcedure",

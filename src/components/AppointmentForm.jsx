@@ -2,24 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, MessageCircle, Send } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, MessageCircle, Send } from "lucide-react";
 
-import { services } from "@/data/services";
-import { clinics } from "@/data/clinics";
-import { plans } from "@/data/plans";
-import { site } from "@/data/site";
+
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-line bg-white px-4 text-[14px] text-navy outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 const labelClass = "mb-2 block text-[13px] font-semibold text-navy";
 
-export default function AppointmentForm() {
+export default function AppointmentForm({ services, clinics, plans, site }) {
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan");
   const serviceParam = searchParams.get("service");
 
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -28,6 +27,7 @@ export default function AppointmentForm() {
     treatment: "",
     date: "",
     message: "",
+    company: "", // honeypot — real patients never see or fill this
   });
 
   useEffect(() => {
@@ -62,11 +62,47 @@ export default function AppointmentForm() {
       .filter(Boolean)
       .join("\n");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setBusy(true);
+    setError("");
+
+    // Open the tab synchronously — a tab opened after an await is blocked as a popup.
     const text = encodeURIComponent(buildMessage());
-    window.open(`https://wa.me/${site.whatsapp}?text=${text}`, "_blank", "noopener");
-    setSent(true);
+    const waTab = window.open(
+      `https://wa.me/${site.whatsapp}?text=${text}`,
+      "_blank",
+      "noopener"
+    );
+
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, source: "appointment-form" }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        // The WhatsApp hand-off already happened, so this is a soft warning.
+        setError(
+          data.error ??
+            "We could not save your request on our side — please send the WhatsApp message so we still receive it."
+        );
+      }
+    } catch {
+      setError(
+        "We could not reach our server — please send the WhatsApp message so we still receive your request."
+      );
+    } finally {
+      if (!waTab) {
+        setError(
+          "Your browser blocked the WhatsApp window. Please allow pop-ups, or call us directly."
+        );
+      }
+      setBusy(false);
+      setSent(true);
+    }
   };
 
   const mailtoHref = `mailto:${site.email}?subject=${encodeURIComponent(
@@ -209,12 +245,31 @@ export default function AppointmentForm() {
         </div>
       </div>
 
+      {/* Honeypot — hidden from patients and screen readers, bots fill it in. */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+        <label htmlFor="company">Company</label>
+        <input
+          id="company"
+          name="company"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={form.company}
+          onChange={update("company")}
+        />
+      </div>
+
       <button
         type="submit"
-        className="mt-7 inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-deep px-6 text-[14.5px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(7,83,107,0.85)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600 sm:w-auto"
+        disabled={busy}
+        className="mt-7 inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-deep px-6 text-[14.5px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(7,83,107,0.85)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
-        <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
-        Send Request on WhatsApp
+        {busy ? (
+          <Loader2 className="h-4.5 w-4.5 animate-spin" aria-hidden="true" />
+        ) : (
+          <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
+        )}
+        {busy ? "Sending…" : "Send Request on WhatsApp"}
       </button>
 
       <p className="mt-4 text-[14px] leading-relaxed text-muted">
@@ -229,14 +284,24 @@ export default function AppointmentForm() {
         . We reply during clinic hours, {site.hours}.
       </p>
 
-      {sent ? (
+      {error ? (
+        <p
+          role="alert"
+          className="mt-5 flex items-start gap-2.5 rounded-xl border border-coral/40 bg-coral-50 p-4 text-[13.5px] leading-relaxed text-navy"
+        >
+          <AlertCircle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral-dark" aria-hidden="true" />
+          {error}
+        </p>
+      ) : null}
+
+      {sent && !error ? (
         <p
           role="status"
           className="mt-5 flex items-start gap-2.5 rounded-xl border border-coral/30 bg-coral-50 p-4 text-[13.5px] leading-relaxed text-navy"
         >
           <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral" aria-hidden="true" />
-          Your request has been opened in WhatsApp. Send the message and our team
-          will confirm your appointment shortly.
+          We have received your request and opened it in WhatsApp. Send the
+          message and our team will confirm your appointment shortly.
         </p>
       ) : null}
     </form>

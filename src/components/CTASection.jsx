@@ -3,13 +3,14 @@ import { CalendarCheck, Phone } from "lucide-react";
 import Container from "./Container";
 import Reveal from "./Reveal";
 import Button from "./Button";
-import { site, telHref } from "@/data/site";
+import { getContactLinks } from "@/lib/content";
 
-export default function CTASection({
+export default async function CTASection({
   title = "Ready to Take the First Step Towards a Healthier Smile?",
   subtitle = "Book a consultation at any of our three Gurugram clinics. You’ll get a proper examination, a clear explanation of your options and an honest, itemised plan.",
   headingId = "cta-heading",
 }) {
+  const { settings: site, telHref } = await getContactLinks();
   return (
     <section className="relative overflow-hidden bg-navy" aria-labelledby={headingId}>
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">

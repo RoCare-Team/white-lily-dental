@@ -8,7 +8,6 @@ import Container from "./Container";
 import SectionHeading from "./SectionHeading";
 import ServiceCard from "./ServiceCard";
 import Reveal from "./Reveal";
-import { services } from "@/data/services";
 
 /**
  * All treatments on one row, scrolled horizontally.
@@ -19,7 +18,7 @@ export default function ServicesSlider({
   eyebrow = "Our Services",
   title = "Complete Dental Care Under One Roof",
   subtitle = "Specialist dental treatments for every stage of your smile.",
-  items = services,
+  items = [],
   className = "",
 }) {
   const trackRef = useRef(null);

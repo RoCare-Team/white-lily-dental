@@ -4,9 +4,10 @@ import { Check, Sparkles } from "lucide-react";
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
 import Reveal from "./Reveal";
-import { plans } from "@/data/plans";
+import { getPlans } from "@/lib/content";
 
-export default function PricingPlans({ className = "" }) {
+export default async function PricingPlans({ className = "" }) {
+  const plans = await getPlans();
   return (
     <section className={`wl-section ${className}`} aria-labelledby="plans-heading">
       <Container>

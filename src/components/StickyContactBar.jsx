@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarCheck, MessageCircle, Phone } from "lucide-react";
 
-import { site, telHref, waHref } from "@/data/site";
-
-export default function StickyContactBar() {
+export default function StickyContactBar({ site, telHref, waHref }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

@@ -7,17 +7,17 @@ import Container from "@/components/Container";
 import CTASection from "@/components/CTASection";
 import JsonLd from "@/components/JsonLd";
 
-import { posts, getPost } from "@/data/blog";
-import { site } from "@/data/site";
+import { getPost, getPosts, getSettings } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const posts = await getPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPost(slug);
 
   if (!post) return { title: "Article Not Found" };
 
@@ -44,11 +44,12 @@ export async function generateMetadata({ params }) {
 
 export default async function BlogPostPage({ params }) {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPost(slug);
 
   if (!post) notFound();
 
-  const more = posts.filter((p) => p.slug !== post.slug).slice(0, 3);
+  const [allPosts, site] = await Promise.all([getPosts(), getSettings()]);
+  const more = allPosts.filter((p) => p.slug !== post.slug).slice(0, 3);
 
   const articleSchema = {
     "@context": "https://schema.org",

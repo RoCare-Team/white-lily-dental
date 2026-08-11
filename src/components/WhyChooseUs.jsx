@@ -10,7 +10,7 @@ import {
 import Container from "./Container";
 import SectionHeading from "./SectionHeading";
 import Reveal from "./Reveal";
-import { site } from "@/data/site";
+import { getSettings } from "@/lib/content";
 
 const reasons = [
   { icon: Stethoscope, title: "Experienced MDS Dentists" },
@@ -20,7 +20,8 @@ const reasons = [
   { icon: Headset, title: "Dedicated Patient Counsellor" },
 ];
 
-export default function WhyChooseUs() {
+export default async function WhyChooseUs() {
+  const site = await getSettings();
   return (
     <section
       id="why-us"

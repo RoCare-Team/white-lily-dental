@@ -12,7 +12,7 @@ import Testimonials from "@/components/Testimonials";
 import CTASection from "@/components/CTASection";
 import JsonLd from "@/components/JsonLd";
 
-import { site } from "@/data/site";
+import { getSettings } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata = {
@@ -62,7 +62,8 @@ const specialities = [
   "Paediatric and preventive dentistry",
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const site = await getSettings();
   return (
     <>
       <PageHero
