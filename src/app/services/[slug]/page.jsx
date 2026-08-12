@@ -42,6 +42,8 @@ export async function generateMetadata({ params }) {
   return {
     title: { absolute: service.seoTitle },
     description: service.seoDescription,
+    // Omitted entirely when unset, so the site-wide keywords are inherited.
+    ...(service.seoKeywords?.length ? { keywords: service.seoKeywords } : {}),
     alternates: { canonical: url },
     openGraph: {
       title: service.seoTitle,
@@ -128,7 +130,7 @@ export default async function ServicePage({ params }) {
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button href="/contact" size="lg">
+              <Button href={`/contact?service=${service.slug}`} size="lg" data-book-appointment>
                 <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />
                 Book Appointment
               </Button>
@@ -186,7 +188,7 @@ export default async function ServicePage({ params }) {
                   align="left"
                   eyebrow="Related Treatments"
                   title="You Might Also Need"
-                  subtitle="Treatments that often go together with this one, at all three of our Gurugram clinics."
+                  subtitle="Treatments that often go together with this one, at both of our Gurugram clinics."
                 />
               </Reveal>
               <Link

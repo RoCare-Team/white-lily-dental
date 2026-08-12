@@ -10,6 +10,7 @@ import JsonLd from "@/components/JsonLd";
 import {
   getClinics,
   getContactLinks,
+  getDoctors,
   getPlans,
   getServices,
 } from "@/lib/content";
@@ -18,12 +19,12 @@ import { breadcrumbSchema } from "@/lib/schema";
 export const metadata = {
   title: "Contact Us | Book a Dental Appointment in Gurugram",
   description:
-    "Book an appointment at White Lily Dental Gurugram. Call +91 97118 11272 or visit any of our three Gurugram clinics. Open Monday to Sunday, 11 AM to 7:30 PM.",
+    "Book an appointment at White Lily Dental Gurugram. Call +91 97118 11272 or visit any of our two Gurugram clinics. Open Monday to Sunday, 11 AM to 7:30 PM.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact White Lily Dental | Gurugram",
     description:
-      "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram.",
+      "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69 and 83 clinics in Gurugram.",
     url: "/contact",
     type: "website",
     images: ["/images/og-image.png"],
@@ -50,11 +51,12 @@ const contactFaqs = [
 ];
 
 export default async function ContactPage() {
-  const [clinics, services, plans, { settings: site, telHref, waHref }] =
+  const [clinics, services, plans, doctors, { settings: site, telHref, waHref }] =
     await Promise.all([
       getClinics(),
       getServices(),
       getPlans(),
+      getDoctors(),
       getContactLinks(),
     ]);
   return (
@@ -80,7 +82,9 @@ export default async function ContactPage() {
                 services={services}
                 clinics={clinics}
                 plans={plans}
+                doctors={doctors}
                 site={site}
+                telHref={telHref}
               />
             </Suspense>
           </div>

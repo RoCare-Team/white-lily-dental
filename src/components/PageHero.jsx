@@ -4,8 +4,15 @@ import { ChevronRight, Home } from "lucide-react";
 import Container from "./Container";
 
 export default function PageHero({ title, subtitle, breadcrumbs = [], children }) {
+  // A long page title at the full display size swamps the page, so it steps
+  // down a notch. Short titles keep the original scale.
+  const isLong = typeof title === "string" && title.length > 46;
+  const titleSize = isLong
+    ? "text-[23px] sm:text-[28px] lg:text-[33px]"
+    : "text-[30px] sm:text-[38px] lg:text-[46px]";
+
   return (
-    <section className="relative overflow-hidden border-b border-line bg-brand-50/50">
+    <section className="wl-page-hero relative overflow-hidden border-b border-line bg-brand-50/50">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/70" />
         <div className="absolute -bottom-24 left-1/4 h-64 w-64 rounded-full bg-coral-50/60 blur-3xl" />
@@ -46,7 +53,9 @@ export default function PageHero({ title, subtitle, breadcrumbs = [], children }
           </ol>
         </nav>
 
-        <h1 className="mt-5 max-w-3xl text-[30px] font-bold leading-[1.15] text-navy sm:text-[38px] lg:text-[46px]">
+        <h1
+          className={`mt-5 max-w-3xl font-bold leading-[1.2] text-navy ${titleSize}`}
+        >
           {title}
         </h1>
 

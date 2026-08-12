@@ -39,7 +39,7 @@ export async function generateMetadata({ params }) {
   if (!doctor) return { title: "Doctor Not Found" };
 
   const title = `${doctor.name} — ${doctor.qualification}`;
-  const description = `${doctor.name}, ${doctor.qualification}, treats patients at White Lily Dental's Sector 69, 77 and 83 clinics in Gurugram. ${doctor.bio}`;
+  const description = `${doctor.name}, ${doctor.qualification}, treats patients at White Lily Dental's Sector 69 and 83 clinics in Gurugram. ${doctor.bio}`;
 
   return {
     title,
@@ -91,7 +91,7 @@ export default async function DoctorPage({ params }) {
                 fill
                 priority
                 sizes="(max-width: 1024px) 92vw, 40vw"
-                className="object-cover"
+                className="object-cover object-top"
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ export default async function DoctorPage({ params }) {
             </ul>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button href="/contact" size="lg">
+              <Button href={`/contact?doctor=${doctor.slug}`} size="lg" data-book-appointment>
                 <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />
                 Book Appointment
               </Button>
@@ -176,7 +176,7 @@ export default async function DoctorPage({ params }) {
                 align="left"
                 eyebrow="Treatments"
                 title={`Treatments by ${doctor.name}`}
-                subtitle="Book directly for any of these treatments at any of our three Gurugram clinics."
+                subtitle="Book directly for any of these treatments at any of our two Gurugram clinics."
               />
               <Link
                 href="/services"

@@ -5,7 +5,10 @@ import { ArrowRight, CalendarCheck } from "lucide-react";
 export default function DoctorCard({ doctor }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[14px] border border-line bg-white transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_18px_34px_-20px_rgba(10,37,64,0.3)]">
-      <div className="relative aspect-3/2 overflow-hidden bg-brand-50">
+      {/* Square slot: the photos are taller than they are wide, so a landscape
+          frame would crop the face off — a square trims only the bottom, and
+          object-top keeps the head in shot. */}
+      <div className="relative aspect-1/1 overflow-hidden bg-brand-50">
         <Image
           src={doctor.image}
           alt={doctor.imageAlt}
@@ -35,7 +38,8 @@ export default function DoctorCard({ doctor }) {
             <ArrowRight className="h-4 w-4 text-coral" aria-hidden="true" />
           </Link>
           <Link
-            href="/contact"
+            href={`/contact?doctor=${doctor.slug}`}
+            data-book-appointment
             className="inline-flex h-11 items-center gap-1.5 rounded-[11px] bg-deep px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-deep-600"
           >
             <CalendarCheck className="h-4 w-4" aria-hidden="true" />

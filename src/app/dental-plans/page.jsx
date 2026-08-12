@@ -14,7 +14,7 @@ export const metadata = {
   openGraph: {
     title: "Annual Dental Plans | White Lily Dental Gurugram",
     description:
-      "Prepaid family dental plans covering consultations, X-rays and professional cleaning at all three Gurugram clinics.",
+      "Prepaid family dental plans covering consultations, X-rays and professional cleaning at both Gurugram clinics.",
     url: "/dental-plans",
     type: "website",
     images: ["/images/og-image.png"],
@@ -24,7 +24,7 @@ export const metadata = {
 const planFaqs = [
   {
     q: "How long is a dental plan valid?",
-    a: "Each plan is valid for one year from the date of purchase and can be used at all three Gurugram clinics.",
+    a: "Each plan is valid for one year from the date of purchase and can be used at both Gurugram clinics.",
   },
   {
     q: "Who can be included in a family plan?",

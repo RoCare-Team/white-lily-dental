@@ -41,6 +41,7 @@ export default async function SingletonPage({ params }) {
         label: schema.label,
         singular: schema.label,
         description: schema.description,
+        titleField: "name",
         fields: schema.fields,
       }}
       initial={JSON.parse(JSON.stringify(initial))}

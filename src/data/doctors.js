@@ -5,7 +5,7 @@ export const doctors = [
     qualification: "MDS – Orthodontics · Certified Implantologist",
     specialty: "Orthodontics & Implantology",
     image:
-      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=900&q=80",
+      "/images/deepak.webp",
     imageAlt: "Dr. Deepak Tomar, MDS Orthodontics and certified implantologist at White Lily Dental",
     bio: "Dr. Deepak Tomar leads the orthodontic and implant practice at White Lily Dental. He plans and delivers braces, clear aligner and full-mouth implant treatment, with a focus on predictable, comfortable outcomes and clear communication at every stage.",
     focus: [
@@ -22,7 +22,7 @@ export const doctors = [
     qualification: "MDS – Prosthodontics",
     specialty: "Prosthodontics & Smile Design",
     image:
-      "https://images.unsplash.com/photo-1659353888906-adb3e0041693?auto=format&fit=crop&w=900&q=80",
+      "/images/meenakshi.webp",
     imageAlt: "Dr. Meenakshi Singh, MDS Prosthodontics at White Lily Dental",
     bio: "Dr. Meenakshi Singh restores form, function and appearance for patients who have lost or damaged teeth. Her work covers crowns, bridges, veneers, complete and partial dentures, and implant-supported prosthetics designed to look natural.",
     focus: [
@@ -39,7 +39,7 @@ export const doctors = [
     qualification: "MDS – Oral & Maxillofacial Surgery",
     specialty: "Oral & Maxillofacial Surgery",
     image:
-      "https://images.unsplash.com/photo-1659353888101-6e53e32515fe?auto=format&fit=crop&w=900&q=80",
+      "/images/lakshay-gupta.webp",
     imageAlt: "Dr. Lakshay Gupta, MDS Oral and Maxillofacial Surgery at White Lily Dental",
     bio: "Dr. Lakshay Gupta handles surgical dentistry at White Lily Dental, including impacted wisdom tooth removal, surgical extractions and pre-prosthetic surgery. Patients consistently describe his procedures as calm, quick and comfortable.",
     focus: [

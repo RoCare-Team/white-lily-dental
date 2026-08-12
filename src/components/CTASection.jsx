@@ -7,7 +7,7 @@ import { getContactLinks } from "@/lib/content";
 
 export default async function CTASection({
   title = "Ready to Take the First Step Towards a Healthier Smile?",
-  subtitle = "Book a consultation at any of our three Gurugram clinics. You’ll get a proper examination, a clear explanation of your options and an honest, itemised plan.",
+  subtitle = "Book a consultation at any of our two Gurugram clinics. You’ll get a proper examination, a clear explanation of your options and an honest, itemised plan.",
   headingId = "cta-heading",
 }) {
   const { settings: site, telHref } = await getContactLinks();
@@ -31,7 +31,7 @@ export default async function CTASection({
         </p>
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <Button href="/contact" variant="white" size="lg">
+          <Button href="/contact" variant="white" size="lg" data-book-appointment>
             <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />
             Book Appointment
           </Button>
@@ -42,7 +42,7 @@ export default async function CTASection({
         </div>
 
         <p className="text-[14px] text-brand-100/60">
-          Open {site.hours} · Sector 69, 77 &amp; 83, Gurugram
+          Open {site.hours} · Sector 69 &amp; 83, Gurugram
         </p>
       </Container>
     </section>

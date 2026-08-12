@@ -10,7 +10,11 @@ export const LEAD_STATUSES = [
 
 export const LEAD_STATUS_VALUES = LEAD_STATUSES.map((s) => s.value);
 
-export const LEAD_SOURCES = ["appointment-form", "service-enquiry"];
+export const LEAD_SOURCES = [
+  "appointment-form",
+  "service-enquiry",
+  "booking-wizard",
+];
 
 export const LEADS_PAGE_SIZE = 25;
 
@@ -19,9 +23,31 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Today as YYYY-MM-DD in local time, the same shape slot dates are stored in. */
+export function todayKey(now = new Date()) {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 /** Builds the Mongo query for the admin leads list from a URLSearchParams. */
 export function buildLeadFilter(searchParams) {
   const filter = {};
+
+  // Slot bookings and plain enquiries are different jobs, so they get
+  // different screens rather than one mixed list.
+  const kind = searchParams.get("kind");
+  if (kind === "appointment") filter.slotDate = { $exists: true };
+  else if (kind === "enquiry") filter.slotDate = { $exists: false };
+
+  if (kind === "appointment") {
+    const when = searchParams.get("when");
+    const today = todayKey();
+    if (when === "today") filter.slotDate = today;
+    else if (when === "past") filter.slotDate = { $lt: today };
+    else if (when !== "all") filter.slotDate = { $gte: today };
+  }
 
   const status = searchParams.get("status");
   if (status && LEAD_STATUS_VALUES.includes(status)) {
@@ -37,11 +63,26 @@ export function buildLeadFilter(searchParams) {
       { phoneDigits: pattern },
       { email: pattern },
       { treatment: pattern },
+      { doctor: pattern },
+      { plan: pattern },
       { message: pattern },
     ];
   }
 
   return filter;
+}
+
+/**
+ * Enquiries read newest-first. Appointments read in clinic order — the next
+ * one to walk in at the top — except when looking back, where most recent
+ * first is what you want.
+ */
+export function buildLeadSort(searchParams) {
+  if (searchParams.get("kind") !== "appointment") return { createdAt: -1 };
+  const backwards = searchParams.get("when") === "past";
+  return backwards
+    ? { slotDate: -1, slotTime: -1 }
+    : { slotDate: 1, slotTime: 1 };
 }
 
 const MAX = {
@@ -50,6 +91,9 @@ const MAX = {
   email: 160,
   clinic: 120,
   treatment: 160,
+  doctor: 120,
+  plan: 120,
+  pageUrl: 300,
   date: 20,
   message: 2000,
 };
@@ -98,6 +142,11 @@ export function parseLead(input) {
       email,
       clinic: clean(input.clinic, MAX.clinic),
       treatment: clean(input.treatment, MAX.treatment),
+      // Booking context: which specialist / package the request is for, and
+      // the page it was sent from. Filled in by the form, not typed.
+      doctor: clean(input.doctor, MAX.doctor),
+      plan: clean(input.plan, MAX.plan),
+      pageUrl: clean(input.pageUrl, MAX.pageUrl),
       preferredDate: clean(input.date, MAX.date),
       message: clean(input.message, MAX.message),
       source,
@@ -118,7 +167,13 @@ export function serializeLead(doc) {
     phone: doc.phone ?? "",
     email: doc.email ?? "",
     clinic: doc.clinic ?? "",
+    clinicId: doc.clinicId ?? "",
+    slotDate: doc.slotDate ?? "",
+    slotTime: doc.slotTime ?? "",
     treatment: doc.treatment ?? "",
+    doctor: doc.doctor ?? "",
+    plan: doc.plan ?? "",
+    pageUrl: doc.pageUrl ?? "",
     preferredDate: doc.preferredDate ?? "",
     message: doc.message ?? "",
     source: doc.source ?? "",

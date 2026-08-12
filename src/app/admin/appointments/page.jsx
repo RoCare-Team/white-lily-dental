@@ -2,21 +2,19 @@ import LeadsBoard from "@/components/admin/LeadsBoard";
 import PageTitle from "@/components/admin/PageTitle";
 import { loadLeadPage } from "@/lib/loadLeads";
 
-export const metadata = { title: "Enquiries" };
-
-// Leads change constantly — never serve this from the cache.
+export const metadata = { title: "Appointments" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminLeadsPage({ searchParams }) {
+export default async function AdminAppointmentsPage({ searchParams }) {
   const params = (await searchParams) ?? {};
 
   let data = null;
   let error = null;
 
   try {
-    data = await loadLeadPage(params, "enquiry");
+    data = await loadLeadPage(params, "appointment");
   } catch (cause) {
-    console.error("Admin enquiries failed to load:", cause);
+    console.error("Admin appointments failed to load:", cause);
     error =
       "Could not reach the database. Check MONGODB_URI and that this server's IP is allowed in Atlas → Network Access.";
   }
@@ -24,8 +22,8 @@ export default async function AdminLeadsPage({ searchParams }) {
   return (
     <>
       <PageTitle
-        title="Patient enquiries"
-        subtitle="Contact and treatment enquiries — appointments with a booked slot live under Appointments."
+        title="Appointments"
+        subtitle="Slots patients have reserved through the booking wizard, in clinic order."
       />
 
       {error ? (
@@ -37,10 +35,14 @@ export default async function AdminLeadsPage({ searchParams }) {
         </p>
       ) : (
         <LeadsBoard
-          kind="enquiry"
-          basePath="/admin/leads"
+          kind="appointment"
+          basePath="/admin/appointments"
           initialData={data}
-          initialFilters={{ status: params.status ?? "", q: params.q ?? "" }}
+          initialFilters={{
+            status: params.status ?? "",
+            q: params.q ?? "",
+            when: params.when ?? "upcoming",
+          }}
         />
       )}
     </>

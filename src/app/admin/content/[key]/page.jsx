@@ -56,6 +56,8 @@ export default async function ContentListPage({ params }) {
     titleField: schema.titleField,
     subtitleField: schema.subtitleField,
     ordered: Boolean(schema.ordered),
+    // The first image field, if any, becomes the row thumbnail.
+    imageField: schema.fields.find((field) => field.type === "image")?.name ?? null,
   };
 
   return <ContentList typeKey={key} schema={clientSchema} items={items} />;

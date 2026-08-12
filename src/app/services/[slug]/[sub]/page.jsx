@@ -140,7 +140,7 @@ export default async function SubServicePage({ params }) {
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button href="/contact" size="lg">
+              <Button href={`/contact?service=${slug}&sub=${sub}`} size="lg" data-book-appointment>
                 <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />
                 Book Appointment
               </Button>

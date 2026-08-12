@@ -4,26 +4,60 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Award,
+  Building2,
   ExternalLink,
+  FileText,
+  HelpCircle,
+  CalendarCheck,
   Inbox,
   LayoutDashboard,
   LogOut,
   Menu,
+  Navigation,
+  Quote,
   Settings,
+  Stethoscope,
+  Tag,
+  UserRound,
   X,
 } from "lucide-react";
 
 import { CONTENT_TYPES, SINGLETONS } from "@/lib/contentSchemas";
 
+/** One icon per content type, so the sidebar scans as a real app menu. */
+const TYPE_ICONS = {
+  services: Stethoscope,
+  doctors: UserRound,
+  clinics: Building2,
+  posts: FileText,
+  plans: Tag,
+  testimonials: Quote,
+  faqs: HelpCircle,
+  associations: Award,
+  settings: Settings,
+  navigation: Navigation,
+};
+
 const CONTENT_LINKS = Object.entries(CONTENT_TYPES).map(([key, schema]) => ({
   href: `/admin/content/${key}`,
   label: schema.label,
+  icon: TYPE_ICONS[key] ?? FileText,
 }));
 
 const SETTINGS_LINKS = Object.entries(SINGLETONS).map(([key, schema]) => ({
   href: `/admin/settings/${key}`,
   label: schema.label,
+  icon: TYPE_ICONS[key] ?? Settings,
 }));
+
+const ALL_LINKS = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/appointments", label: "Appointments", icon: CalendarCheck },
+  { href: "/admin/leads", label: "Enquiries", icon: Inbox },
+  ...CONTENT_LINKS,
+  ...SETTINGS_LINKS,
+];
 
 export default function AdminShell({ email, children }) {
   const pathname = usePathname();
@@ -45,102 +79,101 @@ export default function AdminShell({ email, children }) {
   const isActive = (href) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
+  // Longest matching link wins, so /admin never beats /admin/leads.
+  const current = [...ALL_LINKS]
+    .filter((link) => isActive(link.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+
+  const initials = (email || "A").slice(0, 2).toUpperCase();
+
   const nav = (
-    <nav className="flex h-full flex-col gap-7 overflow-y-auto px-4 py-6">
-      <div>
-        <Link
-          href="/admin"
-          onClick={() => setMenuOpen(false)}
-          className="block px-2 font-display text-[17px] font-extrabold tracking-tight text-navy"
-        >
-          White Lily <span className="text-brand">Admin</span>
-        </Link>
-        <p className="mt-1 truncate px-2 text-[12px] text-muted">{email}</p>
+    <div className="flex h-full flex-col">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-white/10 px-5">
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-[13px] font-bold text-white">
+          WL
+        </span>
+        <span className="font-display text-[15px] font-bold tracking-tight text-white">
+          White Lily <span className="font-medium text-white/50">Admin</span>
+        </span>
       </div>
 
-      <NavGroup>
-        <NavItem
-          href="/admin"
-          label="Dashboard"
-          icon={LayoutDashboard}
-          active={isActive("/admin")}
-          onNavigate={() => setMenuOpen(false)}
-        />
-        <NavItem
-          href="/admin/leads"
-          label="Enquiries"
-          icon={Inbox}
-          active={isActive("/admin/leads")}
-          onNavigate={() => setMenuOpen(false)}
-        />
-      </NavGroup>
-
-      <NavGroup title="Website content">
-        {CONTENT_LINKS.map((link) => (
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+        <NavGroup>
           <NavItem
-            key={link.href}
-            href={link.href}
-            label={link.label}
-            active={isActive(link.href)}
+            href="/admin"
+            label="Dashboard"
+            icon={LayoutDashboard}
+            active={isActive("/admin")}
             onNavigate={() => setMenuOpen(false)}
           />
-        ))}
-      </NavGroup>
-
-      <NavGroup title="Settings">
-        {SETTINGS_LINKS.map((link) => (
           <NavItem
-            key={link.href}
-            href={link.href}
-            label={link.label}
-            icon={Settings}
-            active={isActive(link.href)}
+            href="/admin/appointments"
+            label="Appointments"
+            icon={CalendarCheck}
+            active={isActive("/admin/appointments")}
             onNavigate={() => setMenuOpen(false)}
           />
-        ))}
-      </NavGroup>
+          <NavItem
+            href="/admin/leads"
+            label="Enquiries"
+            icon={Inbox}
+            active={isActive("/admin/leads")}
+            onNavigate={() => setMenuOpen(false)}
+          />
+        </NavGroup>
 
-      <div className="mt-auto space-y-1 border-t border-line pt-4">
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand"
-        >
-          <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          View website
-        </a>
-        <button
-          type="button"
-          onClick={signOut}
-          className="flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-coral-50 hover:text-coral-dark"
-        >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
-          Sign out
-        </button>
+        <NavGroup title="Website content">
+          {CONTENT_LINKS.map((link) => (
+            <NavItem
+              key={link.href}
+              {...link}
+              active={isActive(link.href)}
+              onNavigate={() => setMenuOpen(false)}
+            />
+          ))}
+        </NavGroup>
+
+        <NavGroup title="Configuration">
+          {SETTINGS_LINKS.map((link) => (
+            <NavItem
+              key={link.href}
+              {...link}
+              active={isActive(link.href)}
+              onNavigate={() => setMenuOpen(false)}
+            />
+          ))}
+        </NavGroup>
+      </nav>
+
+      <div className="shrink-0 border-t border-white/10 p-3">
+        <div className="flex items-center gap-2.5 rounded-[10px] px-2 py-2">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11.5px] font-bold text-white">
+            {initials}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12.5px] font-semibold text-white">
+              Administrator
+            </span>
+            <span className="block truncate text-[11.5px] text-white/45">{email}</span>
+          </span>
+          <button
+            type="button"
+            onClick={signOut}
+            title="Sign out"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Sign out</span>
+          </button>
+        </div>
       </div>
-    </nav>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
-      {/* Mobile bar */}
-      <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-line bg-white px-4 lg:hidden">
-        <span className="font-display text-[16px] font-extrabold tracking-tight text-navy">
-          White Lily <span className="text-brand">Admin</span>
-        </span>
-        <button
-          type="button"
-          onClick={() => setMenuOpen(true)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-navy hover:bg-brand-50"
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-          <span className="sr-only">Open menu</span>
-        </button>
-      </div>
-
+    <div className="min-h-screen bg-[#f6f8fb]">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-[248px] border-r border-line bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-[252px] bg-[#0e1c2f] lg:block">
         {nav}
       </aside>
 
@@ -151,13 +184,13 @@ export default function AdminShell({ email, children }) {
             type="button"
             aria-label="Close menu"
             onClick={() => setMenuOpen(false)}
-            className="absolute inset-0 bg-navy/40"
+            className="absolute inset-0 bg-navy/60"
           />
-          <div className="relative h-full w-[270px] bg-white shadow-2xl">
+          <div className="relative h-full w-[272px] bg-[#0e1c2f] shadow-2xl">
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
-              className="absolute right-3 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-brand-50"
+              className="absolute right-3 top-4 inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10"
             >
               <X className="h-4.5 w-4.5" aria-hidden="true" />
               <span className="sr-only">Close menu</span>
@@ -167,8 +200,38 @@ export default function AdminShell({ email, children }) {
         </div>
       ) : null}
 
-      <div className="lg:pl-[248px]">
-        <main className="mx-auto max-w-[1100px] px-4 py-8 sm:px-8">{children}</main>
+      <div className="lg:pl-[252px]">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6">
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-navy transition-colors hover:bg-[#f0f4f9] lg:hidden"
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Open menu</span>
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-bold tracking-tight text-navy">
+              {current?.label ?? "Admin"}
+            </p>
+          </div>
+
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-[9px] border border-line px-3 text-[13px] font-semibold text-muted transition-colors hover:border-brand hover:text-brand"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">View site</span>
+          </a>
+        </header>
+
+        <main className="mx-auto max-w-[1180px] px-4 py-7 sm:px-6 lg:px-8">
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -178,7 +241,7 @@ function NavGroup({ title, children }) {
   return (
     <div>
       {title ? (
-        <p className="mb-1.5 px-3 text-[11px] font-bold uppercase tracking-wider text-muted/70">
+        <p className="mb-2 px-3 text-[10.5px] font-bold uppercase tracking-[0.08em] text-white/35">
           {title}
         </p>
       ) : null}
@@ -193,12 +256,18 @@ function NavItem({ href, label, icon: Icon, active, onNavigate }) {
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] font-medium transition-colors ${
+      className={`relative flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] transition-colors ${
         active
-          ? "bg-brand-50 font-semibold text-brand"
-          : "text-navy hover:bg-[#f5f7fa]"
+          ? "bg-white/10 font-semibold text-white"
+          : "font-medium text-white/60 hover:bg-white/5 hover:text-white"
       }`}
     >
+      {active ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-brand-500"
+        />
+      ) : null}
       {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
       {label}
     </Link>

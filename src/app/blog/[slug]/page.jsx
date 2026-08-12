@@ -24,6 +24,8 @@ export async function generateMetadata({ params }) {
   return {
     title: post.title,
     description: post.excerpt,
+    // Omitted entirely when unset, so the site-wide keywords are inherited.
+    ...(post.seoKeywords?.length ? { keywords: post.seoKeywords } : {}),
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       title: post.title,
@@ -151,7 +153,7 @@ export default async function BlogPostPage({ params }) {
               </h2>
               <p className="mt-2 text-[14px] leading-relaxed text-muted">
                 General advice is no substitute for an examination. Book a
-                consultation at any of our three Gurugram clinics and
+                consultation at any of our two Gurugram clinics and
                 get an answer specific to you.
               </p>
               <div className="mt-5 flex flex-wrap gap-2">

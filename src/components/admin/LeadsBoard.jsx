@@ -40,13 +40,45 @@ function formatDate(iso) {
   });
 }
 
+/** "2026-08-20" → "20 Aug 2026" */
+function formatDay(key) {
+  if (!key) return "";
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** "14:30" → "2:30 PM" */
+function formatSlotTime(time) {
+  if (!time) return "";
+  const [h, m] = time.split(":").map(Number);
+  const period = h < 12 ? "AM" : "PM";
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
 function digitsOnly(phone) {
   const digits = String(phone ?? "").replace(/\D/g, "");
   // Indian numbers are usually typed without the country code.
   return digits.length === 10 ? `91${digits}` : digits;
 }
 
-export default function LeadsBoard({ initialData, initialFilters }) {
+const WHEN_FILTERS = [
+  { value: "upcoming", label: "Upcoming" },
+  { value: "today", label: "Today" },
+  { value: "past", label: "Past" },
+  { value: "all", label: "All dates" },
+];
+
+export default function LeadsBoard({
+  initialData,
+  initialFilters,
+  kind = "enquiry",
+  basePath = "/admin/leads",
+}) {
+  const isAppointments = kind === "appointment";
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -71,7 +103,7 @@ export default function LeadsBoard({ initialData, initialFilters }) {
     }
     // Any filter change invalidates the current page number.
     if (!("page" in changes)) params.delete("page");
-    router.push(`/admin/leads${params.size ? `?${params}` : ""}`);
+    router.push(`${basePath}${params.size ? `?${params}` : ""}`);
   };
 
   // Debounce the search box so typing does not fire a query per keystroke.
@@ -142,7 +174,12 @@ export default function LeadsBoard({ initialData, initialFilters }) {
 
   const exportHref = `/api/admin/leads/export?${new URLSearchParams(
     Object.fromEntries(
-      Object.entries({ status, q: initialFilters.q }).filter(([, v]) => v)
+      Object.entries({
+        kind,
+        status,
+        q: initialFilters.q,
+        when: isAppointments ? initialFilters.when : "",
+      }).filter(([, v]) => v)
     )
   )}`;
 
@@ -166,6 +203,26 @@ export default function LeadsBoard({ initialData, initialFilters }) {
           />
         ))}
       </div>
+
+      {isAppointments ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {WHEN_FILTERS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => pushQuery({ when: option.value })}
+              aria-pressed={initialFilters.when === option.value}
+              className={`inline-flex h-8 items-center rounded-full border px-3.5 text-[13px] font-semibold transition-colors ${
+                initialFilters.when === option.value
+                  ? "border-brand bg-brand-50 text-brand"
+                  : "border-line bg-white text-muted hover:border-brand hover:text-brand"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* Search + export */}
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -198,11 +255,15 @@ export default function LeadsBoard({ initialData, initialFilters }) {
         {leads.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Inbox className="h-8 w-8 text-muted/60" aria-hidden="true" />
-            <p className="text-[15px] font-semibold text-navy">No enquiries found</p>
+            <p className="text-[15px] font-semibold text-navy">
+              {isAppointments ? "No appointments found" : "No enquiries found"}
+            </p>
             <p className="max-w-[380px] text-[13.5px] leading-relaxed text-muted">
               {status || initialFilters.q
                 ? "Try clearing the filters or the search box."
-                : "New appointment requests from the website will appear here."}
+                : isAppointments
+                  ? "Slots booked through the website will appear here."
+                  : "New enquiries from the website will appear here."}
             </p>
           </div>
         ) : (
@@ -210,7 +271,9 @@ export default function LeadsBoard({ initialData, initialFilters }) {
             <table className="w-full min-w-[820px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-line bg-[#fafbfc] text-[12px] font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3">Received</th>
+                  <th className="px-4 py-3">
+                    {isAppointments ? "Appointment" : "Received"}
+                  </th>
                   <th className="px-4 py-3">Patient</th>
                   <th className="px-4 py-3">Treatment</th>
                   <th className="px-4 py-3">Clinic</th>
@@ -225,15 +288,42 @@ export default function LeadsBoard({ initialData, initialFilters }) {
                     onClick={() => setActive(lead)}
                     className="cursor-pointer border-b border-line/70 text-[14px] transition-colors last:border-0 hover:bg-brand-50/60"
                   >
-                    <td className="whitespace-nowrap px-4 py-3.5 text-muted">
-                      {formatDate(lead.createdAt)}
+                    <td className="whitespace-nowrap px-4 py-3.5">
+                      {isAppointments ? (
+                        <>
+                          <span className="block font-semibold text-navy">
+                            {formatDay(lead.slotDate)}
+                          </span>
+                          <span className="block text-[13px] text-teal">
+                            {formatSlotTime(lead.slotTime)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted">{formatDate(lead.createdAt)}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="block font-semibold text-navy">{lead.name}</span>
                       <span className="block text-[13px] text-muted">{lead.phone}</span>
                     </td>
-                    <td className="px-4 py-3.5 text-navy">{lead.treatment || "—"}</td>
-                    <td className="px-4 py-3.5 text-muted">{lead.clinic || "—"}</td>
+                    <td className="px-4 py-3.5">
+                      <span className="block text-navy">
+                        {lead.treatment || lead.plan || "—"}
+                      </span>
+                      {lead.doctor ? (
+                        <span className="block text-[13px] text-muted">
+                          for {lead.doctor}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="block text-muted">{lead.clinic || "—"}</span>
+                      {lead.slotDate && !isAppointments ? (
+                        <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[12px] font-semibold text-teal">
+                          {formatDay(lead.slotDate)} · {formatSlotTime(lead.slotTime)}
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="px-4 py-3.5">
                       <select
                         value={lead.status}
@@ -395,7 +485,16 @@ function LeadDrawer({ lead, busy, onClose, onSaveNotes }) {
     ["Phone", lead.phone],
     ["Email", lead.email || "—"],
     ["Preferred clinic", lead.clinic || "—"],
+    [
+      "Booked slot",
+      lead.slotDate
+        ? `${formatDay(lead.slotDate)} at ${formatSlotTime(lead.slotTime)}`
+        : "Not a slot booking",
+    ],
     ["Treatment", lead.treatment || "—"],
+    ["Requested doctor", lead.doctor || "Any available"],
+    ["Dental plan", lead.plan || "—"],
+    ["Submitted from", lead.pageUrl || "—"],
     ["Preferred date", lead.preferredDate || "—"],
     ["Source", SOURCE_LABELS[lead.source] ?? lead.source ?? "—"],
     ["Received", formatDate(lead.createdAt)],

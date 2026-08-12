@@ -49,16 +49,8 @@ export default function LoginForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-[14px] border border-line bg-white p-6 shadow-[0_18px_40px_-30px_rgba(10,37,64,0.45)]"
-    >
-      <h1 className="text-[19px] font-bold text-navy">Sign in</h1>
-      <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted">
-        Enter your admin credentials to view patient enquiries.
-      </p>
-
-      <div className="mt-5 space-y-4">
+    <form onSubmit={handleSubmit}>
+      <div className="mt-6 space-y-4">
         <div>
           <label className={label} htmlFor="email">
             Email

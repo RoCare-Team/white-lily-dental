@@ -126,6 +126,7 @@ export default function Header({ services, navLinks, site, telHref }) {
 
               <Link
                 href="/contact"
+                data-book-appointment
                 className="wl-sheen hidden h-[42px] items-center gap-2 rounded-full bg-deep px-7 text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600 sm:inline-flex"
               >
                 Book Appointment
@@ -226,6 +227,7 @@ export default function Header({ services, navLinks, site, telHref }) {
                 <div className="mt-4 space-y-2">
                   <Link
                     href="/contact"
+                    data-book-appointment
                     className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-[15px] font-semibold text-deep transition-colors hover:bg-brand-50"
                   >
                     Book Appointment

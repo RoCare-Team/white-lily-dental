@@ -165,13 +165,13 @@ export default function MobileMenu({
             </a>
             <p className="flex items-start gap-3 text-[13.5px] text-muted">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-coral" aria-hidden="true" />
-              Sector 69, 77 &amp; 83, Gurugram
+              Sector 69 &amp; 83, Gurugram
             </p>
           </div>
         </nav>
 
         <div className="shrink-0 space-y-2 border-t border-line p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          <Button href="/contact" size="md" className="w-full" onClick={onClose}>
+          <Button href="/contact" size="md" className="w-full" onClick={onClose} data-book-appointment>
             <CalendarCheck className="h-4 w-4" aria-hidden="true" />
             Book Appointment
           </Button>

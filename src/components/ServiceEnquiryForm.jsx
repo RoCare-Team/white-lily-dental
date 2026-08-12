@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, MessageCircle, Phone } from "lucide-react";
+import { AlertCircle, CalendarCheck, CheckCircle2, Loader2, Phone } from "lucide-react";
 
 
 
@@ -13,6 +13,7 @@ const label = "mb-1.5 block text-[13.5px] font-semibold text-navy";
 /** Compact enquiry form for the service page sidebar. */
 export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }) {
   const [sent, setSent] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -30,51 +31,85 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
     setBusy(true);
     setError("");
 
-    const text = [
-      `Appointment request — ${treatment}`,
-      `Name: ${form.name}`,
-      `Phone: ${form.phone}`,
-      `Preferred clinic: ${form.clinic}`,
-      form.message ? `Message: ${form.message}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    // Opened synchronously — a tab opened after an await is blocked as a popup.
-    const waTab = window.open(
-      `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`,
-      "_blank",
-      "noopener"
-    );
-
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, treatment, source: "service-enquiry" }),
+        body: JSON.stringify({
+          ...form,
+          treatment,
+          pageUrl: window.location.pathname,
+          source: "service-enquiry",
+        }),
       });
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         setError(
           data.error ??
-            "We could not save your request — please send the WhatsApp message so we still receive it."
+            `We could not send your request. Please call us on ${site.phoneDisplay}.`
         );
+        return;
       }
+
+      setConfirmation({ name: form.name, phone: form.phone, clinic: form.clinic });
+      setForm((f) => ({ ...f, name: "", phone: "", message: "" }));
+      setSent(true);
     } catch {
       setError(
-        "We could not reach our server — please send the WhatsApp message so we still receive your request."
+        `We could not reach our server. Please call us on ${site.phoneDisplay}.`
       );
     } finally {
-      if (!waTab) {
-        setError(
-          "Your browser blocked the WhatsApp window. Please allow pop-ups, or call us directly."
-        );
-      }
       setBusy(false);
-      setSent(true);
     }
   };
+
+  // The sidebar is narrow, so the confirmation replaces the form rather than
+  // sitting below it and pushing everything off screen.
+  if (sent && confirmation) {
+    return (
+      <div
+        role="status"
+        className="wl-confirm rounded-[14px] border border-line bg-white p-5 text-center shadow-[0_18px_36px_-28px_rgba(10,37,64,0.4)]"
+      >
+        <span className="wl-confirm-tick mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-teal-50">
+          <CheckCircle2 className="h-7 w-7 text-teal" aria-hidden="true" />
+        </span>
+
+        <div className="wl-confirm-stagger">
+          <h2 className="mt-4 text-[18px] font-bold tracking-tight text-navy">
+            Request received
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-muted">
+            Thank you{confirmation.name ? `, ${confirmation.name.split(" ")[0]}` : ""}.
+            We will call you on{" "}
+            <span className="font-semibold text-navy">{confirmation.phone}</span> to
+            confirm your {treatment.toLowerCase()} appointment at{" "}
+            {confirmation.clinic}.
+          </p>
+
+          <a
+            href={telHref}
+            className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[11px] bg-coral text-[15px] font-semibold text-white transition-colors hover:bg-coral-dark"
+          >
+            <Phone className="h-4.5 w-4.5" aria-hidden="true" />
+            {site.phoneDisplay}
+          </a>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSent(false);
+              setConfirmation(null);
+            }}
+            className="mt-2.5 inline-flex h-11 w-full items-center justify-center rounded-[11px] border border-line text-[14px] font-semibold text-navy transition-colors hover:border-brand hover:text-brand"
+          >
+            Send another request
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -175,9 +210,9 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
         {busy ? (
           <Loader2 className="h-4.5 w-4.5 animate-spin" aria-hidden="true" />
         ) : (
-          <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
+          <CalendarCheck className="h-4.5 w-4.5" aria-hidden="true" />
         )}
-        {busy ? "Sending…" : "Send Request"}
+        {busy ? "Sending…" : "Request Appointment"}
       </button>
 
       <a
@@ -201,18 +236,6 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
         </p>
       ) : null}
 
-      {sent && !error ? (
-        <p
-          role="status"
-          className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-coral/30 bg-coral-50 p-3.5 text-[14px] leading-relaxed text-navy"
-        >
-          <CheckCircle2
-            className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral"
-            aria-hidden="true"
-          />
-          Request received — send the WhatsApp message and we&rsquo;ll confirm your slot.
-        </p>
-      ) : null}
     </form>
   );
 }

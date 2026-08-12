@@ -38,6 +38,7 @@ export default async function EditRecordPage({ params }) {
         label: schema.label,
         singular: schema.singular,
         description: schema.description,
+        titleField: schema.titleField,
         fields: schema.fields,
       }}
       initial={JSON.parse(JSON.stringify(initial))}

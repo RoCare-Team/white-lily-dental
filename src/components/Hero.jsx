@@ -76,7 +76,7 @@ export default async function Hero() {
               style={{ animationDelay: "220ms" }}
             >
               Pain-free treatments, advanced technology and MDS specialists —
-              across three clinics in Gurugram, open every day of the week.
+              across two clinics in Gurugram, open every day of the week.
             </p>
 
             <div
@@ -107,6 +107,7 @@ export default async function Hero() {
             >
               <a
                 href="/contact"
+                data-book-appointment
                 className="wl-sheen inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-deep transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-50"
               >
                 Book Appointment

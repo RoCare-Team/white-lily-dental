@@ -74,7 +74,8 @@ export default async function ClinicsSection({ className = "" }) {
                       Get Directions
                     </a>
                     <Link
-                      href="/contact"
+                      href={`/contact?clinic=${clinic.id}`}
+                      data-book-appointment
                       className="inline-flex h-11 items-center rounded-xl bg-deep px-4 text-[14.5px] font-semibold text-white transition-colors hover:bg-deep-600"
                     >
                       Book Appointment

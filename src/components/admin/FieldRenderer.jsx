@@ -134,10 +134,11 @@ function ScalarInput({ field, value, onChange, id }) {
       );
 
     case "date":
+    case "time":
       return (
         <input
           id={id}
-          type="date"
+          type={field.type}
           value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           className={input}

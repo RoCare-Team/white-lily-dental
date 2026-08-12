@@ -5,12 +5,17 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
 import SiteChrome from "@/components/SiteChrome";
+import BookingModal from "@/components/BookingModal";
 import {
   getClinics,
   getContactLinks,
+  getDoctors,
   getNavigation,
+  getPlans,
+  getPublisher,
   getServices,
   getSettings,
+  getSiteKeywords,
 } from "@/lib/content";
 import { dentistSchema } from "@/lib/schema";
 
@@ -27,17 +32,25 @@ const manrope = Manrope({
 });
 
 export async function generateMetadata() {
-  const site = await getSettings();
+  const [site, keywords, publisher] = await Promise.all([
+    getSettings(),
+    getSiteKeywords(),
+    getPublisher(),
+  ]);
+
   return {
     metadataBase: new URL(site.url),
     title: {
       default:
-        "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 77",
+        "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 83",
       template: "%s | White Lily Dental Gurugram",
     },
     description: site.intro,
     applicationName: site.name,
+    keywords,
     authors: [{ name: site.name }],
+    creator: site.name,
+    publisher,
     alternates: { canonical: "/" },
     openGraph: {
       type: "website",
@@ -61,10 +74,10 @@ export async function generateMetadata() {
       description: site.intro,
       images: ["/images/og-image.png"],
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    // Flipped from Site settings → "Hide the site from search engines".
+    robots: site.noindex
+      ? { index: false, follow: false, nocache: true }
+      : { index: true, follow: true },
   };
 }
 
@@ -75,12 +88,15 @@ export const viewport = {
 };
 
 export default async function RootLayout({ children }) {
-  const [services, navigation, clinics, { settings, telHref }] = await Promise.all([
-    getServices(),
-    getNavigation(),
-    getClinics(),
-    getContactLinks(),
-  ]);
+  const [services, navigation, clinics, doctors, plans, { settings, telHref }] =
+    await Promise.all([
+      getServices(),
+      getNavigation(),
+      getClinics(),
+      getDoctors(),
+      getPlans(),
+      getContactLinks(),
+    ]);
 
   return (
     <html lang="en-IN" className={`${inter.variable} ${manrope.variable}`}>
@@ -107,6 +123,14 @@ export default async function RootLayout({ children }) {
         </SiteChrome>
         <main id="main">{children}</main>
         <SiteChrome>
+          <BookingModal
+            clinics={clinics}
+            services={services}
+            doctors={doctors}
+            plans={plans}
+            site={settings}
+            telHref={telHref}
+          />
           <Footer />
           <JsonLd data={dentistSchema(settings, clinics)} />
         </SiteChrome>

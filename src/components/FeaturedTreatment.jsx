@@ -86,7 +86,8 @@ export default async function FeaturedTreatment() {
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/contact"
+              href="/contact?service=dental-implants"
+              data-book-appointment
               className="inline-flex h-12 items-center justify-center gap-2 rounded-[11px] bg-white px-6 text-[15px] font-semibold text-deep transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-50"
             >
               <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />

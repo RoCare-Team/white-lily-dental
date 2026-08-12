@@ -44,6 +44,7 @@ export default function StickyContactBar({ site, telHref, waHref }) {
 
             <Link
               href="/contact"
+              data-book-appointment
               className="inline-flex h-11 items-center gap-2 rounded-[11px] bg-deep px-5 text-[14.5px] font-semibold text-white transition-colors hover:bg-deep-600"
             >
               <CalendarCheck className="h-4 w-4" aria-hidden="true" />

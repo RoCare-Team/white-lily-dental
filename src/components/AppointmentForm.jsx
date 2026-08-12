@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, CheckCircle2, Loader2, MessageCircle, Send } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarCheck,
+  CheckCircle2,
+  Loader2,
+  Phone,
+  Send,
+} from "lucide-react";
 
 
 
@@ -11,19 +18,40 @@ const fieldClass =
 
 const labelClass = "mb-2 block text-[13px] font-semibold text-navy";
 
-export default function AppointmentForm({ services, clinics, plans, site }) {
+export default function AppointmentForm({
+  services,
+  clinics,
+  plans,
+  doctors,
+  site,
+  telHref,
+}) {
   const searchParams = useSearchParams();
+
+  // "Book appointment" buttons across the site carry what they were next to,
+  // so the clinic can see who and what the request is actually for.
   const planParam = searchParams.get("plan");
   const serviceParam = searchParams.get("service");
+  const subParam = searchParams.get("sub");
+  const doctorParam = searchParams.get("doctor");
+  const clinicParam = searchParams.get("clinic");
+
+  const plan = plans.find((p) => p.id === planParam) ?? null;
+  const service = services.find((s) => s.slug === serviceParam) ?? null;
+  const doctor = doctors?.find((d) => d.slug === doctorParam) ?? null;
+  const subService =
+    service?.subServices?.find((sub) => sub.slug === subParam) ?? null;
 
   const [sent, setSent] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
-    clinic: clinics[0].shortName,
+    clinic:
+      clinics.find((c) => c.id === clinicParam)?.shortName ?? clinics[0].shortName,
     treatment: "",
     date: "",
     message: "",
@@ -31,19 +59,28 @@ export default function AppointmentForm({ services, clinics, plans, site }) {
   });
 
   useEffect(() => {
-    const plan = plans.find((p) => p.id === planParam);
-    const service = services.find((s) => s.slug === serviceParam);
-
     if (plan) {
       setForm((f) => ({
         ...f,
         treatment: "Dental Plan enquiry",
         message: `I would like to know more about ${plan.name} (₹${plan.price} / year).`,
       }));
+    } else if (subService) {
+      setForm((f) => ({ ...f, treatment: subService.name }));
     } else if (service) {
       setForm((f) => ({ ...f, treatment: service.title }));
     }
-  }, [planParam, serviceParam]);
+
+    if (doctor) {
+      setForm((f) => ({
+        ...f,
+        message:
+          f.message ||
+          `I would like to book an appointment with ${doctor.name}.`,
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planParam, serviceParam, subParam, doctorParam]);
 
   const update = (key) => (event) =>
     setForm((f) => ({ ...f, [key]: event.target.value }));
@@ -56,6 +93,8 @@ export default function AppointmentForm({ services, clinics, plans, site }) {
       form.email ? `Email: ${form.email}` : null,
       `Preferred clinic: ${form.clinic}`,
       form.treatment ? `Treatment: ${form.treatment}` : null,
+      doctor ? `Requested doctor: ${doctor.name}` : null,
+      plan ? `Dental plan: ${plan.name}` : null,
       form.date ? `Preferred date: ${form.date}` : null,
       form.message ? `Message: ${form.message}` : null,
     ]
@@ -67,47 +106,138 @@ export default function AppointmentForm({ services, clinics, plans, site }) {
     setBusy(true);
     setError("");
 
-    // Open the tab synchronously — a tab opened after an await is blocked as a popup.
-    const text = encodeURIComponent(buildMessage());
-    const waTab = window.open(
-      `https://wa.me/${site.whatsapp}?text=${text}`,
-      "_blank",
-      "noopener"
-    );
-
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source: "appointment-form" }),
+        body: JSON.stringify({
+          ...form,
+          doctor: doctor?.name ?? "",
+          plan: plan?.name ?? "",
+          pageUrl: window.location.pathname + window.location.search,
+          source: "appointment-form",
+        }),
       });
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        // The WhatsApp hand-off already happened, so this is a soft warning.
         setError(
           data.error ??
-            "We could not save your request on our side — please send the WhatsApp message so we still receive it."
+            `We could not send your request. Please call us on ${site.phoneDisplay}.`
         );
+        return;
       }
+
+      // Snapshot what was booked before clearing, so the confirmation can
+      // repeat it back to the patient.
+      setConfirmation({
+        name: form.name,
+        phone: form.phone,
+        clinic: form.clinic,
+        treatment: form.treatment,
+        date: form.date,
+        doctor: doctor?.name ?? "",
+        plan: plan?.name ?? "",
+      });
+
+      // Clear the personal details so a second patient on the same device does
+      // not submit the first one's information by accident.
+      setForm((f) => ({
+        ...f,
+        name: "",
+        phone: "",
+        email: "",
+        date: "",
+        message: "",
+      }));
+      setSent(true);
     } catch {
       setError(
-        "We could not reach our server — please send the WhatsApp message so we still receive your request."
+        `We could not reach our server. Please call us on ${site.phoneDisplay}.`
       );
     } finally {
-      if (!waTab) {
-        setError(
-          "Your browser blocked the WhatsApp window. Please allow pop-ups, or call us directly."
-        );
-      }
       setBusy(false);
-      setSent(true);
     }
   };
 
   const mailtoHref = `mailto:${site.email}?subject=${encodeURIComponent(
     "Appointment request — White Lily Dental"
   )}&body=${encodeURIComponent(buildMessage())}`;
+
+  // Once the request is in, the form is replaced by its confirmation — there is
+  // nothing left to fill in, and a second submit would only duplicate the lead.
+  if (sent && confirmation) {
+    const summary = [
+      ["Name", confirmation.name],
+      ["Phone", confirmation.phone],
+      ["Clinic", confirmation.clinic],
+      ["Treatment", confirmation.treatment],
+      ["Doctor", confirmation.doctor],
+      ["Dental plan", confirmation.plan],
+      [
+        "Preferred date",
+        confirmation.date
+          ? new Date(confirmation.date).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : "",
+      ],
+    ].filter(([, value]) => value);
+
+    return (
+      <div
+        role="status"
+        className="wl-confirm rounded-[18px] border border-line bg-white p-6 text-center shadow-[0_28px_56px_-38px_rgba(10,37,64,0.45)] sm:p-10"
+      >
+        <span className="wl-confirm-tick mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-teal-50">
+          <CheckCircle2 className="h-9 w-9 text-teal" aria-hidden="true" />
+        </span>
+
+        <div className="wl-confirm-stagger">
+          <h2 className="mt-5 text-[23px] font-bold tracking-tight text-navy">
+            Appointment request received
+          </h2>
+          <p className="mx-auto mt-2.5 max-w-[420px] text-[14.5px] leading-relaxed text-muted">
+            Thank you{confirmation.name ? `, ${confirmation.name.split(" ")[0]}` : ""}.
+            Our team will call you on{" "}
+            <span className="font-semibold text-navy">{confirmation.phone}</span> to
+            confirm your slot during clinic hours, {site.hours}.
+          </p>
+
+          <dl className="mx-auto mt-6 max-w-[380px] divide-y divide-line/70 rounded-[12px] border border-line bg-[#fafbfc] px-4 text-left">
+            {summary.map(([term, value]) => (
+              <div key={term} className="flex gap-4 py-2.5 text-[13.5px]">
+                <dt className="w-[110px] shrink-0 text-muted">{term}</dt>
+                <dd className="min-w-0 break-words font-semibold text-navy">{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="mt-7 flex flex-col justify-center gap-2.5 sm:flex-row">
+            <a
+              href={telHref}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-coral px-6 text-[14.5px] font-semibold text-white transition-colors hover:bg-coral-dark"
+            >
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              Call {site.phoneDisplay}
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                setSent(false);
+                setConfirmation(null);
+              }}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line px-6 text-[14.5px] font-semibold text-navy transition-colors hover:border-brand hover:text-brand"
+            >
+              Book another appointment
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -119,6 +249,38 @@ export default function AppointmentForm({ services, clinics, plans, site }) {
         Fill in your details and we will confirm your slot on WhatsApp or by
         phone. Same-day appointments are often available.
       </p>
+
+      {doctor || plan || subService || service ? (
+        <div className="mt-5 rounded-xl border border-brand/25 bg-brand-50 p-4">
+          <p className="text-[12px] font-bold uppercase tracking-wide text-brand">
+            Booking for
+          </p>
+          <dl className="mt-2 space-y-1 text-[13.5px]">
+            {doctor ? (
+              <div className="flex gap-2">
+                <dt className="text-muted">Doctor</dt>
+                <dd className="font-semibold text-navy">{doctor.name}</dd>
+              </div>
+            ) : null}
+            {subService || service ? (
+              <div className="flex gap-2">
+                <dt className="text-muted">Treatment</dt>
+                <dd className="font-semibold text-navy">
+                  {subService ? `${service.title} — ${subService.name}` : service.title}
+                </dd>
+              </div>
+            ) : null}
+            {plan ? (
+              <div className="flex gap-2">
+                <dt className="text-muted">Plan</dt>
+                <dd className="font-semibold text-navy">
+                  {plan.name} (₹{plan.price} {plan.period})
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        </div>
+      ) : null}
 
       <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
@@ -267,9 +429,9 @@ export default function AppointmentForm({ services, clinics, plans, site }) {
         {busy ? (
           <Loader2 className="h-4.5 w-4.5 animate-spin" aria-hidden="true" />
         ) : (
-          <MessageCircle className="h-4.5 w-4.5" aria-hidden="true" />
+          <CalendarCheck className="h-4.5 w-4.5" aria-hidden="true" />
         )}
-        {busy ? "Sending…" : "Send Request on WhatsApp"}
+        {busy ? "Sending…" : "Request Appointment"}
       </button>
 
       <p className="mt-4 text-[14px] leading-relaxed text-muted">
@@ -294,16 +456,6 @@ export default function AppointmentForm({ services, clinics, plans, site }) {
         </p>
       ) : null}
 
-      {sent && !error ? (
-        <p
-          role="status"
-          className="mt-5 flex items-start gap-2.5 rounded-xl border border-coral/30 bg-coral-50 p-4 text-[13.5px] leading-relaxed text-navy"
-        >
-          <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral" aria-hidden="true" />
-          We have received your request and opened it in WhatsApp. Send the
-          message and our team will confirm your appointment shortly.
-        </p>
-      ) : null}
     </form>
   );
 }

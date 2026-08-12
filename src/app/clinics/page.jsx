@@ -10,14 +10,14 @@ import { getClinics, getSettings } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata = {
-  title: "Our Clinics in Gurugram | Sector 69, 77 & 83",
+  title: "Our Clinics in Gurugram | Sector 69 & 83",
   description:
-    "Visit White Lily Dental at Spaze Corporate Park, Sector 69 or Emaar Palm Hills, Sector 77 in Gurugram. Open Monday to Sunday, 11 AM to 7:30 PM. Call +91 97118 11272.",
+    "Visit White Lily Dental at Spaze Corporate Park, Sector 69 or Sapphire Mall, Sector 83 in Gurugram. Open Monday to Sunday, 11 AM to 7:30 PM. Call +91 97118 11272.",
   alternates: { canonical: "/clinics" },
   openGraph: {
     title: "Our Dental Clinics in Gurugram | White Lily Dental",
     description:
-      "Three fully equipped dental clinics in Gurugram — Sector 69, 77 and 83 — open all seven days.",
+      "Two fully equipped dental clinics in Gurugram — Sector 69 and 83 — open all seven days.",
     url: "/clinics",
     type: "website",
     images: ["/images/og-image.png"],
@@ -27,15 +27,15 @@ export const metadata = {
 const clinicFaqs = [
   {
     q: "What are your clinic timings?",
-    a: "All three clinics — Sector 69, Sector 77 and Sector 83 — are open Monday to Sunday from 11:00 AM to 7:30 PM. We recommend calling ahead on +91 97118 11272 to confirm a slot.",
+    a: "Both clinics — Sector 69 and Sector 83 — are open Monday to Sunday from 11:00 AM to 7:30 PM. We recommend calling ahead on +91 97118 11272 to confirm a slot.",
   },
   {
     q: "Is parking available at the clinics?",
-    a: "Yes. The Sector 69 clinic is inside Spaze Corporate Park, which has visitor parking, and the Sector 77 clinic at Emaar Palm Hills has market parking directly outside.",
+    a: "Yes. The Sector 69 clinic is inside Spaze Corporate Park, which has visitor parking, and the Sector 83 clinic at Sapphire Mall has mall parking directly outside.",
   },
   {
-    q: "Do all three clinics offer the same treatments?",
-    a: "Yes. The same specialists, the same equipment standards and the same sterilisation protocols apply at all three locations. Your records are shared between them, so you can be seen at either.",
+    q: "Do both clinics offer the same treatments?",
+    a: "Yes. The same specialists, the same equipment standards and the same sterilisation protocols apply at both locations. Your records are shared between them, so you can be seen at either.",
   },
   {
     q: "Do I need an appointment or can I walk in?",
@@ -53,7 +53,7 @@ export default async function ClinicsPage() {
     <>
       <PageHero
         title="Our Dental Clinics in Gurugram"
-        subtitle={`Three fully equipped clinics — Sector 69, 77 and 83 — open ${site.hours}. Same specialists, same standards, shared records.`}
+        subtitle={`Two fully equipped clinics — Sector 69 and 83 — open ${site.hours}. Same specialists, same standards, shared records.`}
         breadcrumbs={[{ name: "Clinics", href: "/clinics" }]}
       />
 
@@ -65,7 +65,7 @@ export default async function ClinicsPage() {
           <SectionHeading
             eyebrow="Find Us"
             title="Getting to White Lily Dental"
-            subtitle="All three clinics are easy to reach from across Gurugram. Tap a location to open directions in Google Maps."
+            subtitle="All two clinics are easy to reach from across Gurugram. Tap a location to open directions in Google Maps."
           />
 
           <ul className="mt-9 grid grid-cols-1 gap-6 lg:grid-cols-2">

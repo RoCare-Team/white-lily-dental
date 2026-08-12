@@ -169,6 +169,37 @@ export async function getPostsByDate() {
   return [...posts].sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
+/**
+ * Search-engine keywords for the site.
+ *
+ * Editors can set an explicit list in Site settings. When they have not, one is
+ * derived from the live treatments and clinic areas so the tag is never empty
+ * and never goes stale as services change.
+ */
+export async function getSiteKeywords() {
+  const settings = await getSettings();
+  if (settings.keywords?.length) return settings.keywords;
+
+  const [services, clinics] = await Promise.all([getServices(), getClinics()]);
+
+  const derived = [
+    settings.name,
+    "dental clinic",
+    "dentist",
+    ...services.map((service) => service.title),
+    // Commas would split one keyword into two in the meta tag.
+    ...clinics.map((clinic) => `dentist in ${clinic.shortName.replace(/,/g, "")}`),
+  ].filter(Boolean);
+
+  return [...new Set(derived)].slice(0, 25);
+}
+
+/** Who publishes the site, for the `publisher` meta tag. */
+export async function getPublisher() {
+  const settings = await getSettings();
+  return settings.publisher || settings.legalName || settings.name;
+}
+
 /** Derived link helpers that used to live in data/site.js. */
 export async function getContactLinks() {
   const settings = await getSettings();

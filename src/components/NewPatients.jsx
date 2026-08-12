@@ -64,7 +64,7 @@ export default async function NewPatients() {
               </ul>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button href="/contact" size="md">
+                <Button href="/contact" size="md" data-book-appointment>
                   <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />
                   Book Appointment
                 </Button>

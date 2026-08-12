@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/adminSession";
 import { getLeads } from "@/lib/mongodb";
-import { buildLeadFilter } from "@/lib/leads";
+import { buildLeadFilter, buildLeadSort } from "@/lib/leads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +11,12 @@ const COLUMNS = [
   ["Phone", (l) => l.phone],
   ["Email", (l) => l.email],
   ["Clinic", (l) => l.clinic],
+  ["Booked date", (l) => l.slotDate],
+  ["Booked time", (l) => l.slotTime],
   ["Treatment", (l) => l.treatment],
+  ["Requested doctor", (l) => l.doctor],
+  ["Dental plan", (l) => l.plan],
+  ["Submitted from", (l) => l.pageUrl],
   ["Preferred date", (l) => l.preferredDate],
   ["Message", (l) => l.message],
   ["Source", (l) => l.source],
@@ -39,7 +44,7 @@ export async function GET(request) {
     const leads = await getLeads();
     const docs = await leads
       .find(buildLeadFilter(searchParams))
-      .sort({ createdAt: -1 })
+      .sort(buildLeadSort(searchParams))
       .limit(5000)
       .toArray();
 

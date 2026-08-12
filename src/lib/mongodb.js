@@ -48,6 +48,18 @@ export async function getLeads() {
       leads.createIndex({ createdAt: -1 }),
       leads.createIndex({ status: 1, createdAt: -1 }),
       leads.createIndex({ phone: 1 }),
+      // Looking up which times are already taken at a clinic on a date.
+      leads.createIndex({ clinicId: 1, slotDate: 1 }),
+      // The database itself refuses a second booking of the same slot, so two
+      // patients clicking at the same moment cannot both get it.
+      leads.createIndex(
+        { clinicId: 1, slotDate: 1, slotTime: 1 },
+        {
+          unique: true,
+          name: "unique_slot",
+          partialFilterExpression: { slotDate: { $exists: true } },
+        }
+      ),
     ]).catch((error) => {
       // Never let index creation break a request — log and carry on.
       indexesReady = undefined;

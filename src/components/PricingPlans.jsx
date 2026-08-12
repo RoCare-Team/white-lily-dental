@@ -15,7 +15,7 @@ export default async function PricingPlans({ className = "" }) {
           <SectionHeading
             eyebrow="Dental Plans"
           title="Affordable Annual Dental Plans"
-            subtitle="Prepaid family cover for consultations, X-rays and cleaning at all three clinics."
+            subtitle="Prepaid family cover for consultations, X-rays and cleaning at both clinics."
           />
         </Reveal>
 
@@ -112,7 +112,7 @@ export default async function PricingPlans({ className = "" }) {
         </ul>
 
         <p className="mt-6 text-center text-[14px] text-muted">
-          Valid for one year at all three Gurugram clinics.
+          Valid for one year at both Gurugram clinics.
           Treatment costs are billed separately.
         </p>
       </Container>

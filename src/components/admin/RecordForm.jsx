@@ -114,64 +114,83 @@ export default function RecordForm({
     }
   };
 
+  const heading =
+    mode === "singleton"
+      ? schema.label
+      : recordId
+        ? String(value[schema.titleField] || "").trim() ||
+          `Edit ${schema.singular.toLowerCase()}`
+        : `New ${schema.singular.toLowerCase()}`;
+
+  const saveLabel = busy ? "Saving…" : saved && !dirty ? "Saved" : "Save changes";
+
   return (
     <form onSubmit={save}>
-      <Link
-        href={backHref}
-        className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-muted hover:text-brand"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-        {schema.label}
-      </Link>
-
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[24px] font-bold tracking-tight text-navy">
-            {mode === "singleton"
-              ? schema.label
-              : recordId
-                ? `Edit ${schema.singular.toLowerCase()}`
-                : `New ${schema.singular.toLowerCase()}`}
-          </h1>
-          {schema.description ? (
-            <p className="mt-1.5 text-[14px] text-muted">{schema.description}</p>
-          ) : null}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {recordId && mode === "collection" ? (
-            <button
-              type="button"
-              onClick={remove}
-              disabled={busy}
-              className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-line px-4 text-[13.5px] font-semibold text-muted transition-colors hover:border-coral hover:text-coral-dark disabled:opacity-60"
+      {/* Sticky action bar — the form is long, so Save must always be reachable */}
+      <div className="sticky top-16 z-20 -mx-4 mb-6 border-b border-line bg-[#f6f8fb]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Link
+              href={backHref}
+              className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-muted hover:text-brand"
             >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-              Delete
-            </button>
-          ) : null}
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              {schema.label}
+            </Link>
+            <h1 className="mt-0.5 truncate text-[19px] font-bold tracking-tight text-navy">
+              {heading}
+            </h1>
+          </div>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-deep px-5 text-[14px] font-semibold text-white transition-colors hover:bg-deep-600 disabled:opacity-60"
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : saved && !dirty ? (
-              <Check className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <Save className="h-4 w-4" aria-hidden="true" />
-            )}
-            {busy ? "Saving…" : saved && !dirty ? "Saved" : "Save changes"}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {dirty ? (
+              <span className="hidden items-center gap-1.5 text-[12.5px] font-medium text-muted sm:inline-flex">
+                <span
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-coral"
+                  aria-hidden="true"
+                />
+                Unsaved changes
+              </span>
+            ) : null}
+
+            {recordId && mode === "collection" ? (
+              <button
+                type="button"
+                onClick={remove}
+                disabled={busy}
+                className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-line bg-white px-3.5 text-[13.5px] font-semibold text-muted transition-colors hover:border-coral hover:text-coral-dark disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-deep px-5 text-[14px] font-semibold text-white transition-colors hover:bg-deep-600 disabled:opacity-60"
+            >
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : saved && !dirty ? (
+                <Check className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Save className="h-4 w-4" aria-hidden="true" />
+              )}
+              {saveLabel}
+            </button>
+          </div>
         </div>
       </div>
+
+      {schema.description ? (
+        <p className="mb-5 text-[13.5px] text-muted">{schema.description}</p>
+      ) : null}
 
       {error ? (
         <p
           role="alert"
-          className="mt-5 flex items-start gap-2 rounded-[11px] border border-coral/40 bg-coral-50 p-3.5 text-[13.5px] leading-relaxed text-navy"
+          className="mb-5 flex items-start gap-2 rounded-[11px] border border-coral/40 bg-coral-50 p-3.5 text-[13.5px] leading-relaxed text-navy"
         >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-coral-dark" aria-hidden="true" />
           {error}
@@ -181,25 +200,29 @@ export default function RecordForm({
       {saved && !dirty ? (
         <p
           role="status"
-          className="mt-5 flex items-start gap-2 rounded-[11px] border border-teal/30 bg-teal-50 p-3.5 text-[13.5px] leading-relaxed text-navy"
+          className="mb-5 flex items-start gap-2 rounded-[11px] border border-teal/30 bg-teal-50 p-3.5 text-[13.5px] leading-relaxed text-navy"
         >
           <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" aria-hidden="true" />
           Saved — the website has been updated.
         </p>
       ) : null}
 
-      <div className="mt-6 space-y-6 rounded-[14px] border border-line bg-white p-5 sm:p-6">
+      <div className="space-y-5">
         {schema.fields.map((field) => (
-          <FieldRenderer
+          <div
             key={field.name}
-            field={field}
-            value={value[field.name]}
-            onChange={(next) => setField(field.name, next)}
-          />
+            className="rounded-[13px] border border-line bg-white p-4 sm:p-5"
+          >
+            <FieldRenderer
+              field={field}
+              value={value[field.name]}
+              onChange={(next) => setField(field.name, next)}
+            />
+          </div>
         ))}
       </div>
 
-      <div className="mt-5 flex justify-end">
+      <div className="mt-6 flex justify-end">
         <button
           type="submit"
           disabled={busy}
@@ -210,7 +233,7 @@ export default function RecordForm({
           ) : (
             <Save className="h-4 w-4" aria-hidden="true" />
           )}
-          {busy ? "Saving…" : "Save changes"}
+          {saveLabel}
         </button>
       </div>
     </form>

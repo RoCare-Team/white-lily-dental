@@ -51,6 +51,12 @@ export const CONTENT_TYPES = {
       { name: "seoTitle", label: "SEO title", type: "text" },
       { name: "seoDescription", label: "SEO description", type: "textarea" },
       {
+        name: "seoKeywords",
+        label: "SEO keywords",
+        type: "list",
+        help: "Overrides the site-wide keywords for this page only.",
+      },
+      {
         name: "sections",
         label: "Page sections",
         type: "repeater",
@@ -173,6 +179,28 @@ export const CONTENT_TYPES = {
       { name: "phone", label: "Phone (dial format)", type: "text", help: "e.g. +919711811272" },
       { name: "phoneDisplay", label: "Phone (display)", type: "text" },
       { name: "hours", label: "Opening hours", type: "text" },
+      {
+        name: "openTime",
+        label: "Bookings open at",
+        type: "time",
+        default: "11:00",
+        help: "First appointment slot of the day.",
+      },
+      {
+        name: "closeTime",
+        label: "Bookings close at",
+        type: "time",
+        default: "19:30",
+        help: "No slot is offered at or after this time.",
+      },
+      {
+        name: "slotMinutes",
+        label: "Minutes per slot",
+        type: "number",
+        min: 10,
+        max: 180,
+        default: 30,
+      },
       { name: "mapsUrl", label: "Google Maps link", type: "text" },
       { name: "image", label: "Photo", type: "image" },
       { name: "imageAlt", label: "Photo alt text", type: "text" },
@@ -202,6 +230,12 @@ export const CONTENT_TYPES = {
       },
       { name: "image", label: "Cover image", type: "image" },
       { name: "imageAlt", label: "Cover image alt text", type: "text" },
+      {
+        name: "seoKeywords",
+        label: "SEO keywords",
+        type: "list",
+        help: "Overrides the site-wide keywords for this article only.",
+      },
       {
         name: "body",
         label: "Article body",
@@ -245,10 +279,16 @@ export const CONTENT_TYPES = {
     fields: [
       { name: "name", label: "Patient name", type: "text", required: true },
       {
+        name: "image",
+        label: "Photo",
+        type: "image",
+        help: "Round profile picture. Left empty, the patient's initial is shown instead.",
+      },
+      {
         name: "initial",
         label: "Initial",
         type: "text",
-        help: "Single letter for the avatar. Left blank, the first letter of the name is used.",
+        help: "Single letter shown when there is no photo. Left blank, the first letter of the name is used.",
       },
       { name: "rating", label: "Rating", type: "number", min: 1, max: 5, default: 5 },
       { name: "source", label: "Source", type: "text", default: "Google Review" },
@@ -303,7 +343,25 @@ export const SINGLETONS = {
       { name: "hours", label: "Opening hours", type: "text" },
       { name: "yearsExperience", label: "Years of experience", type: "text" },
       { name: "intro", label: "Site introduction", type: "textarea", rows: 5 },
+      {
+        name: "publisher",
+        label: "Publisher",
+        type: "text",
+        help: "Who publishes the site — shown to search engines. Left blank, the legal name is used.",
+      },
+      {
+        name: "keywords",
+        label: "SEO keywords",
+        type: "list",
+        help: "Site-wide keywords. Left empty, they are generated from your treatments and clinic areas. Pages can override them individually.",
+      },
       { name: "googleReviewsUrl", label: "Google reviews link", type: "text" },
+      {
+        name: "noindex",
+        label: "Hide the site from search engines",
+        type: "boolean",
+        help: "Keep this ON while the site is being built. Turn it OFF on launch day — until you do, Google will not list any page.",
+      },
       {
         name: "socials",
         label: "Social links",

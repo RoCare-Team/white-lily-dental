@@ -23,6 +23,7 @@ export default async function NewRecordPage({ params }) {
         label: schema.label,
         singular: schema.singular,
         description: schema.description,
+        titleField: schema.titleField,
         fields: schema.fields,
       }}
       initial={emptyRecord(schema.fields)}

@@ -12,10 +12,10 @@ const PATTERN = {
   opacity: 0.05,
 };
 
-function Stars({ rating }) {
+function Stars({ rating, className = "" }) {
   return (
     <div
-      className="flex items-center gap-0.5"
+      className={`flex items-center gap-0.5 ${className}`}
       role="img"
       aria-label={`${rating} out of 5 stars`}
     >
@@ -29,6 +29,43 @@ function Stars({ rating }) {
         />
       ))}
     </div>
+  );
+}
+
+/**
+ * Reviewer photo, falling back to their initial.
+ *
+ * A plain <img> rather than next/image: reviewer photos are pasted in from
+ * wherever the review lives (Google, a phone), so the host is not known ahead
+ * of time and could not be allow-listed. At 40px the optimiser saves nothing.
+ */
+function Avatar({ review }) {
+  const initial = (review.initial || review.name || "?").trim().charAt(0).toUpperCase();
+
+  // The ring sits on both variants, so a card with a photo and one without are
+  // the same size and weight.
+  const ring = "h-20 w-20 shrink-0 rounded-full ring-3 ring-coral/70 ring-offset-4 ring-offset-transparent";
+
+  if (review.image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={review.image}
+        alt={`${review.name}, patient of White Lily Dental`}
+        width={80}
+        height={80}
+        loading="lazy"
+        className={`${ring} object-cover`}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`${ring} inline-flex items-center justify-center bg-coral text-[26px] font-bold text-white`}
+    >
+      {initial}
+    </span>
   );
 }
 
@@ -72,29 +109,27 @@ export default async function Testimonials() {
               delay={i * 100}
               className="w-[84vw] max-w-90 shrink-0 snap-start sm:w-auto sm:max-w-none"
             >
-              <article className="flex h-full flex-col rounded-[16px] border border-white/12 bg-white/[0.06] p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.09]">
-                <div className="flex items-start justify-between">
-                  <Stars rating={review.rating} />
-                  <Quote className="h-7 w-7 text-white/20" aria-hidden="true" />
-                </div>
+              <article className="relative flex h-full flex-col items-center rounded-[16px] border border-white/12 bg-white/[0.06] px-6 pb-6 pt-9 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.09]">
+                <Quote
+                  className="pointer-events-none absolute right-4 top-4 h-7 w-7 text-white/12"
+                  aria-hidden="true"
+                />
 
-                <p className="mt-4 line-clamp-4 flex-1 text-[15.5px] leading-[1.65] text-white/85">
-                  {review.text}
+                <Avatar review={review} />
+
+                <h3 className="mt-6 text-[15.5px] font-bold uppercase tracking-[0.06em] text-white">
+                  {review.name}
+                </h3>
+
+                <Stars className="mt-3 justify-center" rating={review.rating} />
+
+                <p className="mt-3 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-brand-100/70">
+                  {review.source}
                 </p>
 
-                <div className="mt-5 flex items-center gap-3 border-t border-white/12 pt-4">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-coral text-[15px] font-bold text-white">
-                    {review.initial}
-                  </span>
-                  <span>
-                    <span className="block text-[15px] font-semibold text-white">
-                      {review.name}
-                    </span>
-                    <span className="block text-[13.5px] text-brand-100/70">
-                      {review.source}
-                    </span>
-                  </span>
-                </div>
+                <p className="mt-4 line-clamp-5 flex-1 text-[15px] leading-[1.65] text-white/80">
+                  {review.text}
+                </p>
               </article>
             </Reveal>
           ))}

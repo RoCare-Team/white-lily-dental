@@ -96,7 +96,8 @@ export default async function InvisibleAligners() {
               Call Now
             </a>
             <Link
-              href="/contact"
+              href="/contact?service=braces-treatment&sub=clear-aligners"
+              data-book-appointment
               className="inline-flex h-12 items-center justify-center gap-2 rounded-[11px] bg-deep px-6 text-[15px] font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-deep-600"
             >
               <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />

@@ -1,6 +1,7 @@
 ﻿import Image from "next/image";
-import { Award, Check, HeartHandshake, Microscope, Users } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check } from "lucide-react";
 
+import Button from "@/components/Button";
 import Container from "@/components/Container";
 import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
@@ -10,15 +11,16 @@ import Associations from "@/components/Associations";
 import ClinicsSection from "@/components/ClinicsSection";
 import Testimonials from "@/components/Testimonials";
 import CTASection from "@/components/CTASection";
+import FAQ from "@/components/FAQ";
 import JsonLd from "@/components/JsonLd";
 
 import { getSettings } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata = {
-  title: "About Us | Multi-Specialist Dental Clinic in Gurugram",
+  title: "About White Lily Dental | Trusted Dental Clinic in Gurugram",
   description:
-    "Learn about White Lily Dental — a multi-specialist dental chain in Gurugram with 21+ years of experience, MDS specialists and advanced technology across Sector 69, 77 and 83.",
+    "White Lily Dental is an emerging dental clinic chain managed by qualified doctors — experts in orthodontics, prosthetic dentistry, implants, restorative, paediatric and cosmetic dentistry, endodontics and oral surgery.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About White Lily Dental | Gurugram",
@@ -30,26 +32,31 @@ export const metadata = {
   },
 };
 
-const values = [
+/**
+ * Copy on this page is the live whitelilydental.in /about-us page, kept word
+ * for word — this site replaces that one, so the existing wording and its
+ * search rankings carry over.
+ */
+const differentiators = [
+  "Specialists from all fields of dentistry. Our detailed selection methods ensure that you get the best skills and expertise available.",
+  "All dental procedures, right from basic cavities to advanced full mouth reconstructions, are done under one roof by a team of specialists.",
+  "Best and latest equipment, absolute sterilization, and hygiene.",
+  "Lowest radiation exposure possible.",
+  "Specialized dental healthcare for children, pregnant women, patients with heart conditions, and disabilities.",
+];
+
+const aboutFaqs = [
   {
-    icon: Users,
-    title: "Multi-specialist by design",
-    desc: "Orthodontics, prosthodontics and oral surgery under one roof, so complex cases never get passed around between clinics.",
+    q: "What makes White Lily Dental different from other dental clinics in Gurugram?",
+    a: "White Lily Dental stands out for its patient-first approach, advanced dental technology, and ethical treatment practices. We emphasise accurate diagnosis, transparent consultations, and personalised treatment plans using modern cosmetic and aligner dentistry to deliver long-lasting results.",
   },
   {
-    icon: Microscope,
-    title: "Diagnosis before treatment",
-    desc: "Digital X-rays, photographs and a written plan come first. You approve the plan before anything begins.",
+    q: "What dental services are offered at White Lily Dental?",
+    a: "White Lily Dental offers a complete range of dental services, including cosmetic dentistry, invisible aligners, braces, dental implants, root canal treatment, crowns and bridges, restorations, preventive care, and smile makeover solutions under one roof.",
   },
   {
-    icon: HeartHandshake,
-    title: "Support after the chair",
-    desc: "A dedicated patient counsellor follows up on healing, aftercare and review appointments.",
-  },
-  {
-    icon: Award,
-    title: "Consistent standards",
-    desc: "All three Gurugram clinics run the same protocols, the same sterilisation standard and the same specialist team.",
+    q: "Does White Lily Dental follow strict hygiene and safety protocols?",
+    a: "Absolutely. White Lily Dental follows stringent sterilization, hygiene, and safety protocols in line with dental healthcare standards. Every procedure is carried out in a clean, safe, and well-sanitized clinical environment to ensure patient safety and comfort.",
   },
 ];
 
@@ -67,13 +74,13 @@ export default async function AboutPage() {
   return (
     <>
       <PageHero
-        title="A Multi-Specialist Dental Chain Built Around Gurugram Families"
-        subtitle="White Lily Dental brings specialist dentistry, modern technology and honest treatment planning to three clinics in Gurugram — Sector 69, 77 and 83."
+        title="About White Lily Dental | Trusted Dental Clinic in Gurugram"
+        subtitle="An emerging dental clinic chain managed by qualified doctors, across two clinics in Gurugram — Sector 69 and 83."
         breadcrumbs={[{ name: "About Us", href: "/about" }]}
       />
 
       {/* Story */}
-      <section className="wl-section" aria-labelledby="story-heading">
+      <section className="wl-section" aria-label="Who we are">
         <Container className="grid grid-cols-1 items-center gap-9 lg:grid-cols-2 lg:gap-12">
           <div className="relative">
             <div className="relative aspect-4/3 overflow-hidden rounded-[18px] border border-line shadow-[0_36px_70px_-42px_rgba(10,37,64,0.5)]">
@@ -97,70 +104,127 @@ export default async function AboutPage() {
               align="left"
               as="h2"
               eyebrow="Who We Are"
-              title="Specialist Dentistry, Without the Runaround"
+              title="We Believe Dentistry Goes Beyond Teeth"
             />
 
             <div className="wl-prose mt-6 text-[15px]">
-              <p>{site.intro}</p>
               <p>
-                Most dental problems get referred from clinic to clinic — braces
-                at one place, implants at another, surgery somewhere else. We
-                built White Lily Dental so that a patient could be diagnosed,
-                planned and treated by the right specialist in one place, with
-                one set of records and one point of contact.
+                White Lily Dental is an emerging dental clinic chain managed by
+                qualified Doctors. These Dental clinic doctors are experts in
+                Orthodontics (braces), Prosthetic Dentistry, and Dental
+                Implants, Restorative Dentistry, Pediatric Dentistry, Cosmetic
+                Dentistry, Endodontics, and Oral and Maxillofacial Surgery. All
+                these areas are interrelated and require a comprehensive
+                approach to deal with the problem.
               </p>
               <p>
-                That means an MDS orthodontist plans your braces, an MDS
-                prosthodontist designs your crowns and dentures, and an MDS oral
-                surgeon handles the surgical work — all coordinating on the same
-                case.
+                The organization assures you of an unparalleled experience in
+                dental care. We believe dentistry goes beyond teeth. So whether
+                it is our highly skilled and experienced esteemed panel of
+                dentists, the painless dental treatment, the perfect hygiene,
+                and cutting-edge equipment and instruments, soothing ambiance,
+                or a friendly voice over the phone, one thing is sure – What you
+                are about to experience is the best in dental care.
               </p>
             </div>
 
-            <ul className="mt-8 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-              {specialities.map((item) => (
-                <li key={item} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-coral-50 text-coral">
-                    <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
-                  </span>
-                  <span className="text-[14px] leading-snug text-navy/85">{item}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </Container>
       </section>
 
-      {/* Values */}
-      <section className="wl-section bg-brand-50/40" aria-labelledby="values-heading">
+      {/* Why patients choose us — the five points from the live site */}
+      <section className="wl-section bg-brand-50/40" aria-label="How we work">
         <Container>
           <SectionHeading
             eyebrow="How We Work"
-            title="What Guides Every Treatment We Plan"
-            subtitle="Four principles that shape how we diagnose, explain and deliver dental care at all three Gurugram clinics."
+            title="What You Are About to Experience Is the Best in Dental Care"
+            subtitle="Five things that shape every treatment we plan at both Gurugram clinics."
           />
 
-          <ul className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map((value) => {
-              const Icon = value.icon;
-              return (
-                <li
-                  key={value.title}
-                  className="rounded-[16px] border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_28px_50px_-32px_rgba(10,37,64,0.4)]"
-                >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <h3 className="mt-4 text-[15.5px] font-bold leading-snug text-navy">
-                    {value.title}
-                  </h3>
-                  <p className="mt-2 text-[13.5px] leading-[1.75] text-muted">
-                    {value.desc}
-                  </p>
-                </li>
-              );
-            })}
+          <ol className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {differentiators.map((point, index) => (
+              <li
+                key={point}
+                className="rounded-[16px] border border-line bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_28px_50px_-32px_rgba(10,37,64,0.4)]"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-[16px] font-bold text-brand">
+                  {index + 1}
+                </span>
+                <p className="mt-4 text-[14.5px] leading-[1.7] text-navy/85">{point}</p>
+              </li>
+            ))}
+          </ol>
+        </Container>
+      </section>
+
+      {/* Founder */}
+      <section className="wl-section" aria-label="Our founder">
+        <Container className="max-w-3xl">
+          <SectionHeading
+            as="h2"
+            align="left"
+            eyebrow="Our Founder"
+            title={
+              <>
+                From Preventive Care to Smile Makeovers —{" "}
+                <span className="text-brand">Explore Our Dental Services</span>
+              </>
+            }
+          />
+
+          <div className="wl-prose mt-6 text-[15px]">
+            <p>
+              Dr. Deepak Tomar, founder of White Lily Dental Clinic, has over{" "}
+              {site.yearsExperience} years of experience in orthodontics and
+              implant dentistry. He mainly works on invisible braces, dental
+              implants, and complex smile correction cases where precision is
+              important.
+            </p>
+            <p>
+              He leads two branches in Gurugram — White Lily Dental Clinic,
+              Sector 69, and White Lily Dental Clinic, Sector 83. Both clinics
+              focus on modern dental treatments such as clear aligners, smile
+              design, and full-mouth rehabilitation.
+            </p>
+            <p>
+              His approach is simple and practical. Clear advice, proper
+              planning, and treatments that are meant to last.
+            </p>
+          </div>
+
+          <ul className="mt-8 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            {specialities.map((item) => (
+              <li key={item} className="flex items-start gap-2.5">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-coral-50 text-coral">
+                  <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+                </span>
+                <span className="text-[14px] leading-snug text-navy/85">{item}</span>
+              </li>
+            ))}
           </ul>
+
+          {/* Booking callout, as on the live page */}
+          <div className="mt-9 rounded-r-[14px] border-l-4 border-brand bg-brand-50/60 p-6">
+            <h3 className="text-[18px] font-bold text-brand">
+              Book Your Appointment
+            </h3>
+            <p className="mt-2.5 text-[15px] leading-[1.75] text-navy/85">
+              Get expert consultation for invisible braces, dental implants, and
+              smile correction at our Gurugram clinics. Simple process. Clear
+              guidance.
+            </p>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Button href="/contact" size="md" data-book-appointment>
+                <CalendarCheck className="h-[18px] w-[18px]" aria-hidden="true" />
+                Book Appointment
+              </Button>
+              <Button href="/services" variant="outline" size="md">
+                Explore Our Dental Services
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
         </Container>
       </section>
 
@@ -169,6 +233,15 @@ export default async function AboutPage() {
       <Associations />
       <Testimonials />
       <ClinicsSection />
+
+      <FAQ
+        headingId="about-faq-heading"
+        eyebrow="Good to Know"
+        title="About White Lily Dental"
+        subtitle="The questions patients ask us most before their first visit."
+        items={aboutFaqs}
+      />
+
       <CTASection />
 
       <JsonLd

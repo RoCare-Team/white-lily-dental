@@ -17,6 +17,12 @@ function coerceField(field, raw) {
     case "date":
       return String(raw ?? "").trim().slice(0, MAX_TEXT);
 
+    case "time": {
+      const value = String(raw ?? "").trim();
+      // 24-hour HH:MM only — slot maths depends on it.
+      return /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : (field.default ?? "");
+    }
+
     case "textarea":
       return String(raw ?? "").trim().slice(0, MAX_LONG_TEXT);
 
