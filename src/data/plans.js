@@ -1,3 +1,11 @@
+/**
+ * FALLBACK ONLY — this is not what the website reads.
+ *
+ * Live content lives in MongoDB and is edited at /admin. This file is served
+ * only when its collection is empty or the database is unreachable, so the
+ * site never renders a blank section. Editing a value here will NOT change the
+ * website; change it in the admin panel instead.
+ */
 export const plans = [
   {
     id: "package-1",
@@ -19,7 +27,7 @@ export const plans = [
     id: "package-2",
     name: "Package 2",
     subtitle: "Consult, X-ray & cleaning",
-    price: "4,499",
+    price: "5500",
     period: "/ Year",
     description:
       "Everything in Package 1, plus professional cleaning for two members.",
@@ -36,7 +44,7 @@ export const plans = [
     id: "package-3",
     name: "Package 3",
     subtitle: "Complete family care",
-    price: "6,499",
+    price: "9500",
     period: "/ Year",
     description:
       "Full preventive cover with professional cleaning for all four members.",

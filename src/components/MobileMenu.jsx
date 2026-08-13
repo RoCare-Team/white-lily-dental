@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarCheck, ChevronDown, Mail, MapPin, Phone, X } from "lucide-react";
@@ -117,10 +118,21 @@ export default function MobileMenu({
                                 onClick={onClose}
                                 className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13.5px] text-navy/80 transition-colors hover:bg-brand-50 hover:text-brand"
                               >
-                                <Icon
-                                  className="h-4 w-4 shrink-0 text-brand"
-                                  aria-hidden="true"
-                                />
+                                {service.iconImage ? (
+                                  <Image
+                                    src={service.iconImage}
+                                    alt=""
+                                    width={80}
+                                    height={80}
+                                    aria-hidden="true"
+                                    className="h-5 w-5 shrink-0"
+                                  />
+                                ) : (
+                                  <Icon
+                                    className="h-4 w-4 shrink-0 text-brand"
+                                    aria-hidden="true"
+                                  />
+                                )}
                                 {service.menuTitle}
                               </Link>
                             </li>

@@ -1,3 +1,11 @@
+/**
+ * FALLBACK ONLY — this is not what the website reads.
+ *
+ * Live content lives in MongoDB and is edited at /admin. This file is served
+ * only when its collection is empty or the database is unreachable, so the
+ * site never renders a blank section. Editing a value here will NOT change the
+ * website; change it in the admin panel instead.
+ */
 import {
   Smile,
   Bone,
@@ -25,7 +33,7 @@ export const services = [
     slug: "braces-treatment",
     livePath: "/service/braces",
     accent: { bg: "#E8F0FC", fg: "#1668C7" },
-    iconImage: null,
+    iconImage: "/images/service1-braces.png",
     icon: Smile,
     title: "Braces Treatment",
     menuTitle: "Braces Treatment",

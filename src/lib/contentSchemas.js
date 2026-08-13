@@ -36,7 +36,18 @@ export const CONTENT_TYPES = {
       { name: "menuTitle", label: "Menu title", type: "text" },
       { name: "excerpt", label: "Card excerpt", type: "textarea" },
       { name: "tagline", label: "Tagline", type: "text" },
-      { name: "icon", label: "Icon", type: "icon" },
+      {
+        name: "iconImage",
+        label: "Icon image",
+        type: "image",
+        help: "Round icon shown on the service cards and menu. Left empty, the drawn icon below is used instead.",
+      },
+      {
+        name: "icon",
+        label: "Fallback icon",
+        type: "icon",
+        help: "Used only when no icon image is set.",
+      },
       {
         name: "accent",
         label: "Accent colours",

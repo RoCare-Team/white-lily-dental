@@ -69,7 +69,7 @@ export default function ServiceCard({ service, variant = "card" }) {
     <Link
       href={`/services/${service.slug}`}
       style={{ "--accent": accent.fg, "--accent-soft": accent.bg }}
-      className="group relative isolate flex h-full flex-col overflow-hidden rounded-[18px] border border-line bg-white p-6 transition-all duration-400 hover:-translate-y-1.5 hover:border-transparent hover:shadow-[0_26px_48px_-26px_var(--accent-soft),0_12px_24px_-16px_rgba(10,37,64,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      className="group relative isolate flex h-full flex-col items-center overflow-hidden rounded-[18px] border border-line bg-white p-6 text-center transition-all duration-400 hover:-translate-y-1.5 hover:border-transparent hover:shadow-[0_26px_48px_-26px_var(--accent-soft),0_12px_24px_-16px_rgba(10,37,64,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
       {/* accent wash that blooms from the top-right on hover */}
       <span
@@ -77,17 +77,17 @@ export default function ServiceCard({ service, variant = "card" }) {
         className="pointer-events-none absolute -right-10 -top-14 -z-10 h-32 w-32 rounded-full bg-[var(--accent-soft)] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
       />
 
-      <div className="flex items-start justify-between gap-3">
-        {mark}
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-navy transition-all duration-400 group-hover:border-transparent group-hover:bg-[var(--accent)] group-hover:text-white">
-          <ArrowUpRight
-            className="h-[18px] w-[18px] transition-transform duration-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            aria-hidden="true"
-          />
-        </span>
-      </div>
+      {/* Pinned to the corner so the mark can sit centred in the card */}
+      <span className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-navy transition-all duration-400 group-hover:border-transparent group-hover:bg-[var(--accent)] group-hover:text-white">
+        <ArrowUpRight
+          className="h-[18px] w-[18px] transition-transform duration-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          aria-hidden="true"
+        />
+      </span>
 
-      <h3 className="mt-5 text-[17.5px] font-semibold leading-snug text-navy transition-colors duration-300 group-hover:text-[var(--accent)]">
+      {mark}
+
+      <h3 className="mt-4 text-[17.5px] font-semibold leading-snug text-navy transition-colors duration-300 group-hover:text-[var(--accent)]">
         {service.title}
       </h3>
 
