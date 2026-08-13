@@ -5,8 +5,17 @@ export const LEAD_STATUSES = [
   { value: "contacted", label: "Contacted" },
   { value: "booked", label: "Booked" },
   { value: "closed", label: "Closed" },
+  { value: "cancelled", label: "Cancelled" },
   { value: "spam", label: "Spam" },
 ];
+
+/**
+ * Statuses that still hold an appointment slot. A cancelled or spam booking
+ * releases its time back to the public booking wizard — this list is what both
+ * the availability query and the unique index are built from, so they can never
+ * disagree about whether a slot is free.
+ */
+export const SLOT_HOLDING_STATUSES = ["new", "contacted", "booked", "closed"];
 
 export const LEAD_STATUS_VALUES = LEAD_STATUSES.map((s) => s.value);
 
@@ -14,6 +23,7 @@ export const LEAD_SOURCES = [
   "appointment-form",
   "service-enquiry",
   "booking-wizard",
+  "plan-enquiry",
 ];
 
 export const LEADS_PAGE_SIZE = 25;
@@ -35,11 +45,17 @@ export function todayKey(now = new Date()) {
 export function buildLeadFilter(searchParams) {
   const filter = {};
 
-  // Slot bookings and plain enquiries are different jobs, so they get
-  // different screens rather than one mixed list.
+  // Slot bookings, plan enquiries and plain enquiries are three different
+  // jobs for the clinic, so each gets its own screen rather than one mixed list.
   const kind = searchParams.get("kind");
-  if (kind === "appointment") filter.slotDate = { $exists: true };
-  else if (kind === "enquiry") filter.slotDate = { $exists: false };
+  if (kind === "appointment") {
+    filter.slotDate = { $exists: true };
+  } else if (kind === "plan") {
+    filter.source = "plan-enquiry";
+  } else if (kind === "enquiry") {
+    filter.slotDate = { $exists: false };
+    filter.source = { $ne: "plan-enquiry" };
+  }
 
   if (kind === "appointment") {
     const when = searchParams.get("when");

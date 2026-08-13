@@ -38,6 +38,36 @@ export async function getDb() {
 
 let indexesReady;
 
+/**
+ * The unique-slot index, created so it can be redefined later.
+ *
+ * Mongo rejects createIndex when an index of the same name exists with
+ * different options, so an options change is applied by dropping first. That
+ * only happens once, on the deploy that changes them.
+ */
+async function createSlotIndex(leads) {
+  const { SLOT_HOLDING_STATUSES } = await import("@/lib/leads");
+
+  const spec = { clinicId: 1, slotDate: 1, slotTime: 1 };
+  const options = {
+    unique: true,
+    name: "unique_slot",
+    partialFilterExpression: {
+      slotDate: { $exists: true },
+      status: { $in: SLOT_HOLDING_STATUSES },
+    },
+  };
+
+  try {
+    await leads.createIndex(spec, options);
+  } catch (error) {
+    // 85 = IndexOptionsConflict, 86 = IndexKeySpecsConflict
+    if (error?.code !== 85 && error?.code !== 86) throw error;
+    await leads.dropIndex("unique_slot");
+    await leads.createIndex(spec, options);
+  }
+}
+
 /** Creates the indexes the admin panel queries on. Runs once per process. */
 export async function getLeads() {
   const db = await getDb();
@@ -51,15 +81,9 @@ export async function getLeads() {
       // Looking up which times are already taken at a clinic on a date.
       leads.createIndex({ clinicId: 1, slotDate: 1 }),
       // The database itself refuses a second booking of the same slot, so two
-      // patients clicking at the same moment cannot both get it.
-      leads.createIndex(
-        { clinicId: 1, slotDate: 1, slotTime: 1 },
-        {
-          unique: true,
-          name: "unique_slot",
-          partialFilterExpression: { slotDate: { $exists: true } },
-        }
-      ),
+      // patients clicking at the same moment cannot both get it. Cancelled and
+      // spam bookings fall outside the index, which is what frees their slot.
+      createSlotIndex(leads),
     ]).catch((error) => {
       // Never let index creation break a request — log and carry on.
       indexesReady = undefined;

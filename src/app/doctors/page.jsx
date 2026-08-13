@@ -14,7 +14,7 @@ export const metadata = {
   openGraph: {
     title: "Meet Our Doctors | White Lily Dental Gurugram",
     description:
-      "MDS-qualified orthodontist, prosthodontist and oral surgeon treating patients at our Sector 69 and 83 clinics.",
+      "MDS-qualified orthodontist, prosthodontist and oral surgeon treating patients at our Sector 69 and 77 clinics.",
     url: "/doctors",
     type: "website",
     images: ["/images/og-image.png"],

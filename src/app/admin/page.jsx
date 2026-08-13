@@ -1,6 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, CalendarCheck, Inbox, Stethoscope, Users } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarCheck,
+  Inbox,
+  Stethoscope,
+  Tag,
+  Users,
+} from "lucide-react";
 
+import DashboardCharts from "@/components/admin/DashboardCharts";
 import PageTitle from "@/components/admin/PageTitle";
 import SeedPrompt from "@/components/admin/SeedPrompt";
 import { getDb, getLeads } from "@/lib/mongodb";
@@ -24,22 +33,104 @@ async function loadOverview() {
 
   const leads = await getLeads();
   const today = todayKey();
-  const enquiryOnly = { slotDate: { $exists: false } };
+  // Same three buckets the screens use, so the numbers agree with the lists.
+  const enquiryOnly = {
+    slotDate: { $exists: false },
+    source: { $ne: "plan-enquiry" },
+  };
+  const planOnly = { source: "plan-enquiry" };
 
-  const [totalLeads, newLeads, upcoming, todayCount, recent] = await Promise.all([
-    leads.countDocuments(enquiryOnly),
-    leads.countDocuments({ ...enquiryOnly, status: "new" }),
-    leads.countDocuments({ slotDate: { $gte: today } }),
-    leads.countDocuments({ slotDate: today }),
-    leads.find(enquiryOnly).sort({ createdAt: -1 }).limit(6).toArray(),
-  ]);
+  // Twelve whole months back, starting at the 1st, so the chart's first
+  // column is a complete month rather than a part one.
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  since.setDate(1);
+  since.setMonth(since.getMonth() - 11);
+
+  const [totalLeads, newLeads, planCount, upcoming, todayCount, recent, byMonth, byTreatment] =
+    await Promise.all([
+      leads.countDocuments(enquiryOnly),
+      leads.countDocuments({ ...enquiryOnly, status: "new" }),
+      leads.countDocuments(planOnly),
+      leads.countDocuments({ slotDate: { $gte: today } }),
+      leads.countDocuments({ slotDate: today }),
+      leads.find(enquiryOnly).sort({ createdAt: -1 }).limit(6).toArray(),
+
+      // One pass, split into the same three buckets the screens use.
+      leads
+        .aggregate([
+          { $match: { createdAt: { $gte: since } } },
+          {
+            $group: {
+              _id: {
+                month: {
+                  $dateToString: {
+                    format: "%Y-%m",
+                    date: "$createdAt",
+                    timezone: "Asia/Kolkata",
+                  },
+                },
+                kind: {
+                  $switch: {
+                    branches: [
+                      {
+                        case: { $gt: [{ $ifNull: ["$slotDate", ""] }, ""] },
+                        then: "appointments",
+                      },
+                      {
+                        case: { $eq: ["$source", "plan-enquiry"] },
+                        then: "plans",
+                      },
+                    ],
+                    default: "enquiries",
+                  },
+                },
+              },
+              count: { $sum: 1 },
+            },
+          },
+        ])
+        .toArray(),
+
+      leads
+        .aggregate([
+          { $match: { treatment: { $nin: [null, ""] } } },
+          { $group: { _id: "$treatment", count: { $sum: 1 } } },
+          { $sort: { count: -1 } },
+          { $limit: 6 },
+        ])
+        .toArray(),
+    ]);
+
+  // Fill every month in the window, so a quiet month is a visible zero rather
+  // than a gap the eye closes up.
+  const months = [];
+  for (let i = 0; i < 12; i += 1) {
+    const d = new Date(since.getFullYear(), since.getMonth() + i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    months.push({
+      key,
+      label: d.toLocaleDateString("en-IN", { month: "short" }),
+      full: d.toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
+      appointments: 0,
+      enquiries: 0,
+      plans: 0,
+    });
+  }
+  for (const row of byMonth) {
+    const month = months.find((m) => m.key === row._id.month);
+    if (month) month[row._id.kind] = row.count;
+  }
 
   return {
     counts,
     totalLeads,
     newLeads,
+    planCount,
     upcoming,
     todayCount,
+    months,
+    treatments: byTreatment.map((t) => ({ name: t._id, count: t.count })),
     recent: recent.map((lead) => ({
       id: String(lead._id),
       name: lead.name ?? "",
@@ -97,7 +188,7 @@ export default async function AdminDashboardPage() {
 
       {!data.seeded ? <SeedPrompt /> : null}
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard
           label="Appointments today"
           value={data.todayCount}
@@ -120,6 +211,13 @@ export default async function AdminDashboardPage() {
           tone="slate"
         />
         <StatCard
+          label="Plan enquiries"
+          value={data.planCount}
+          href="/admin/plan-enquiries"
+          icon={Tag}
+          tone="slate"
+        />
+        <StatCard
           label="Awaiting reply"
           value={data.newLeads}
           href="/admin/leads?status=new"
@@ -127,6 +225,8 @@ export default async function AdminDashboardPage() {
           tone={data.newLeads > 0 ? "coral" : "slate"}
         />
       </div>
+
+      <DashboardCharts months={data.months} treatments={data.treatments} />
 
       <div className="mt-6 grid gap-5 lg:grid-cols-5">
         <Panel

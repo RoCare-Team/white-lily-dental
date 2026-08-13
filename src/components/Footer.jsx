@@ -160,7 +160,11 @@ export default async function Footer() {
             <Link href="/privacy-policy" className="transition-colors hover:text-white">
               Privacy Policy
             </Link>
-            <Link href="/contact" className="transition-colors hover:text-white">
+            <Link
+              href="/contact"
+              data-book-appointment
+              className="transition-colors hover:text-white"
+            >
               Book Appointment
             </Link>
           </div>

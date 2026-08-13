@@ -75,7 +75,7 @@ export default async function AboutPage() {
     <>
       <PageHero
         title="About White Lily Dental | Trusted Dental Clinic in Gurugram"
-        subtitle="An emerging dental clinic chain managed by qualified doctors, across two clinics in Gurugram — Sector 69 and 83."
+        subtitle="An emerging dental clinic chain managed by qualified doctors, across two clinics in Gurugram — Sector 69 and 77."
         breadcrumbs={[{ name: "About Us", href: "/about" }]}
       />
 
@@ -182,7 +182,7 @@ export default async function AboutPage() {
             </p>
             <p>
               He leads two branches in Gurugram — White Lily Dental Clinic,
-              Sector 69, and White Lily Dental Clinic, Sector 83. Both clinics
+              Sector 69, and White Lily Dental Clinic, Sector 77. Both clinics
               focus on modern dental treatments such as clear aligners, smile
               design, and full-mouth rehabilitation.
             </p>

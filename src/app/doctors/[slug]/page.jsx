@@ -39,7 +39,7 @@ export async function generateMetadata({ params }) {
   if (!doctor) return { title: "Doctor Not Found" };
 
   const title = `${doctor.name} — ${doctor.qualification}`;
-  const description = `${doctor.name}, ${doctor.qualification}, treats patients at White Lily Dental's Sector 69 and 83 clinics in Gurugram. ${doctor.bio}`;
+  const description = `${doctor.name}, ${doctor.qualification}, treats patients at White Lily Dental's Sector 69 and 77 clinics in Gurugram. ${doctor.bio}`;
 
   return {
     title,

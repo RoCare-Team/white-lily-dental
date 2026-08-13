@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  CalendarX,
   Download,
   Inbox,
+  RotateCcw,
   Loader2,
   Mail,
   MessageCircle,
@@ -21,12 +23,15 @@ const STATUS_STYLES = {
   contacted: "bg-amber-100 text-amber-800",
   booked: "bg-teal-50 text-teal",
   closed: "bg-slate-100 text-muted",
+  cancelled: "bg-coral-50 text-coral-dark",
   spam: "bg-coral-50 text-coral-dark",
 };
 
 const SOURCE_LABELS = {
   "appointment-form": "Appointment form",
   "service-enquiry": "Service page",
+  "booking-wizard": "Booking wizard",
+  "plan-enquiry": "Dental plan",
 };
 
 function formatDate(iso) {
@@ -79,6 +84,7 @@ export default function LeadsBoard({
   basePath = "/admin/leads",
 }) {
   const isAppointments = kind === "appointment";
+  const isPlans = kind === "plan";
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -256,14 +262,20 @@ export default function LeadsBoard({
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Inbox className="h-8 w-8 text-muted/60" aria-hidden="true" />
             <p className="text-[15px] font-semibold text-navy">
-              {isAppointments ? "No appointments found" : "No enquiries found"}
+              {isAppointments
+                ? "No appointments found"
+                : isPlans
+                  ? "No plan enquiries found"
+                  : "No enquiries found"}
             </p>
             <p className="max-w-[380px] text-[13.5px] leading-relaxed text-muted">
               {status || initialFilters.q
                 ? "Try clearing the filters or the search box."
                 : isAppointments
                   ? "Slots booked through the website will appear here."
-                  : "New enquiries from the website will appear here."}
+                  : isPlans
+                    ? "Patients who enquire about a dental plan will appear here."
+                    : "New enquiries from the website will appear here."}
             </p>
           </div>
         ) : (
@@ -275,7 +287,7 @@ export default function LeadsBoard({
                     {isAppointments ? "Appointment" : "Received"}
                   </th>
                   <th className="px-4 py-3">Patient</th>
-                  <th className="px-4 py-3">Treatment</th>
+                  <th className="px-4 py-3">{isPlans ? "Plan" : "Treatment"}</th>
                   <th className="px-4 py-3">Clinic</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -286,7 +298,9 @@ export default function LeadsBoard({
                   <tr
                     key={lead.id}
                     onClick={() => setActive(lead)}
-                    className="cursor-pointer border-b border-line/70 text-[14px] transition-colors last:border-0 hover:bg-brand-50/60"
+                    className={`cursor-pointer border-b border-line/70 text-[14px] transition-colors last:border-0 hover:bg-brand-50/60 ${
+                      lead.status === "cancelled" ? "opacity-55" : ""
+                    }`}
                   >
                     <td className="whitespace-nowrap px-4 py-3.5">
                       {isAppointments ? (
@@ -294,7 +308,13 @@ export default function LeadsBoard({
                           <span className="block font-semibold text-navy">
                             {formatDay(lead.slotDate)}
                           </span>
-                          <span className="block text-[13px] text-teal">
+                          <span
+                            className={`block text-[13px] ${
+                              lead.status === "cancelled"
+                                ? "text-coral-dark line-through"
+                                : "text-teal"
+                            }`}
+                          >
                             {formatSlotTime(lead.slotTime)}
                           </span>
                         </>
@@ -307,8 +327,8 @@ export default function LeadsBoard({
                       <span className="block text-[13px] text-muted">{lead.phone}</span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="block text-navy">
-                        {lead.treatment || lead.plan || "—"}
+                      <span className="block font-medium text-navy">
+                        {isPlans ? lead.plan || "—" : lead.treatment || lead.plan || "—"}
                       </span>
                       {lead.doctor ? (
                         <span className="block text-[13px] text-muted">
@@ -414,6 +434,16 @@ export default function LeadsBoard({
           busy={pending === active.id}
           onClose={() => setActive(null)}
           onSaveNotes={(notes) => patchLead(active.id, { notes })}
+          onCancelBooking={() => {
+            if (
+              !confirm(
+                "Cancel this appointment? The slot goes back on sale immediately and another patient can book it."
+              )
+            )
+              return;
+            patchLead(active.id, { status: "cancelled" });
+          }}
+          onRestoreBooking={() => patchLead(active.id, { status: "new" })}
         />
       ) : null}
     </>
@@ -466,7 +496,14 @@ function PageButton({ children, disabled, onClick }) {
   );
 }
 
-function LeadDrawer({ lead, busy, onClose, onSaveNotes }) {
+function LeadDrawer({
+  lead,
+  busy,
+  onClose,
+  onSaveNotes,
+  onCancelBooking,
+  onRestoreBooking,
+}) {
   const [notes, setNotes] = useState(lead.notes ?? "");
 
   useEffect(() => {
@@ -605,6 +642,56 @@ function LeadDrawer({ lead, busy, onClose, onSaveNotes }) {
               Save notes
             </button>
           </div>
+
+          {lead.slotDate ? (
+            <div className="mt-7 border-t border-line pt-5">
+              {lead.status === "cancelled" ? (
+                <>
+                  <p className="flex items-start gap-2 rounded-[10px] border border-coral/30 bg-coral-50 p-3 text-[13px] leading-relaxed text-navy">
+                    <CalendarX
+                      className="mt-0.5 h-4 w-4 shrink-0 text-coral-dark"
+                      aria-hidden="true"
+                    />
+                    This appointment is cancelled. The {formatSlotTime(lead.slotTime)}{" "}
+                    slot on {formatDay(lead.slotDate)} is bookable again.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={onRestoreBooking}
+                    className="mt-2.5 inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-line px-4 text-[14px] font-semibold text-navy transition-colors hover:border-brand hover:text-brand disabled:opacity-50"
+                  >
+                    <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                    Restore appointment
+                  </button>
+                  <p className="mt-2 text-[12px] leading-relaxed text-muted">
+                    Restoring only works if nobody has taken the slot since.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[13px] leading-relaxed text-muted">
+                    Patient cannot make it? Cancelling frees the{" "}
+                    {formatSlotTime(lead.slotTime)} slot on{" "}
+                    {formatDay(lead.slotDate)} so another patient can book it.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={onCancelBooking}
+                    className="mt-2.5 inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-coral/40 bg-coral-50 px-4 text-[14px] font-semibold text-coral-dark transition-colors hover:bg-coral hover:text-white disabled:opacity-50"
+                  >
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <CalendarX className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    Cancel appointment
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

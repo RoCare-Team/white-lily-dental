@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getClinics } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
-import { parseLead } from "@/lib/leads";
+import { parseLead, SLOT_HOLDING_STATUSES } from "@/lib/leads";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { availableSlots, formatTime, isValidDate, isValidTime } from "@/lib/slots";
 
@@ -61,7 +61,7 @@ export async function POST(request) {
 
     const taken = await leads
       .find(
-        { clinicId, slotDate, status: { $ne: "spam" } },
+        { clinicId, slotDate, status: { $in: SLOT_HOLDING_STATUSES } },
         { projection: { slotTime: 1 } }
       )
       .toArray();

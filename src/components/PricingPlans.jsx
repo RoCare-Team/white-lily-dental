@@ -98,6 +98,7 @@ export default async function PricingPlans({ className = "" }) {
 
                 <Link
                   href={`/contact?plan=${plan.id}`}
+                  data-plan-enquiry
                   className={`mt-6 inline-flex h-12 items-center justify-center rounded-[11px] text-[15px] font-semibold transition-all duration-300 hover:-translate-y-0.5 ${
                     plan.popular
                       ? "bg-white text-navy hover:bg-brand-50"

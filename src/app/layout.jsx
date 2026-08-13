@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
 import SiteChrome from "@/components/SiteChrome";
 import BookingModal from "@/components/BookingModal";
+import PlanEnquiryModal from "@/components/PlanEnquiryModal";
 import {
   getClinics,
   getContactLinks,
@@ -42,7 +43,7 @@ export async function generateMetadata() {
     metadataBase: new URL(site.url),
     title: {
       default:
-        "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 83",
+        "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 77",
       template: "%s | White Lily Dental Gurugram",
     },
     description: site.intro,
@@ -128,6 +129,12 @@ export default async function RootLayout({ children }) {
             services={services}
             doctors={doctors}
             plans={plans}
+            site={settings}
+            telHref={telHref}
+          />
+          <PlanEnquiryModal
+            plans={plans}
+            clinics={clinics}
             site={settings}
             telHref={telHref}
           />

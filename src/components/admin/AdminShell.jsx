@@ -55,6 +55,7 @@ const ALL_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/appointments", label: "Appointments", icon: CalendarCheck },
   { href: "/admin/leads", label: "Enquiries", icon: Inbox },
+  { href: "/admin/plan-enquiries", label: "Plan enquiries", icon: Tag },
   ...CONTENT_LINKS,
   ...SETTINGS_LINKS,
 ];
@@ -118,6 +119,13 @@ export default function AdminShell({ email, children }) {
             label="Enquiries"
             icon={Inbox}
             active={isActive("/admin/leads")}
+            onNavigate={() => setMenuOpen(false)}
+          />
+          <NavItem
+            href="/admin/plan-enquiries"
+            label="Plan enquiries"
+            icon={Tag}
+            active={isActive("/admin/plan-enquiries")}
             onNavigate={() => setMenuOpen(false)}
           />
         </NavGroup>

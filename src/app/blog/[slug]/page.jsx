@@ -159,6 +159,7 @@ export default async function BlogPostPage({ params }) {
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link
                   href="/contact"
+                  data-book-appointment
                   className="inline-flex h-11 items-center rounded-xl bg-deep px-5 text-[13.5px] font-semibold text-white transition-colors hover:bg-deep-600"
                 >
                   Book Appointment

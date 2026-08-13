@@ -55,6 +55,17 @@ export async function PATCH(request, { params }) {
     if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
     return NextResponse.json({ lead: serializeLead(doc) });
   } catch (error) {
+    // Un-cancelling only works while the slot is still free — the unique index
+    // is what says no, and it deserves a human explanation.
+    if (error?.code === 11000) {
+      return NextResponse.json(
+        {
+          error:
+            "That slot has already been booked by another patient, so this appointment cannot be restored. Cancel the other booking first, or book this patient a different time.",
+        },
+        { status: 409 }
+      );
+    }
     console.error("Failed to update lead:", error);
     return NextResponse.json({ error: "Could not update lead." }, { status: 500 });
   }

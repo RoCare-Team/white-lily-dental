@@ -13,7 +13,7 @@ export const homeFaqs = [
   },
   {
     q: "Where are your clinics located in Gurugram?",
-    a: "We have two clinics — Sector 69 (Spaze Corporate Park, Tower A, above Axis Bank) and Sector 83 (Sapphire Mall). Both are open Monday to Sunday, 11:00 AM to 7:30 PM.",
+    a: "We have two clinics — Sector 69 (Spaze Corporate Park, Tower A, above Axis Bank) and Sector 77 (Emaar Palm Hills). Both are open Monday to Sunday, 11:00 AM to 7:30 PM.",
   },
   {
     q: "Do you offer EMI or payment plans?",

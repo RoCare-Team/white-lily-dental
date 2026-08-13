@@ -77,7 +77,7 @@ export default async function PrivacyPolicyPage() {
           <div className="mx-auto max-w-3xl">
             <p className="text-[15px] leading-[1.85] text-muted">
               This policy applies to {site.name} and to both of our clinics in
-              Gurugram — Sector 69 and 83 — as well as to this website.
+              Gurugram — Sector 69 and 77 — as well as to this website.
             </p>
 
             {sections.map((section) => (

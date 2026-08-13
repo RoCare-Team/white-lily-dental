@@ -20,7 +20,14 @@ export default async function ClinicsSection({ className = "" }) {
           />
         </Reveal>
 
-        <ul className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Three columns only once there are three clinics to fill them —
+            otherwise the row is capped and centred rather than leaving a hole
+            on the right. */}
+        <ul
+          className={`mx-auto mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 ${
+            clinics.length >= 3 ? "lg:grid-cols-3" : "lg:max-w-4xl"
+          }`}
+        >
           {clinics.map((clinic, i) => (
             <Reveal as="li" key={clinic.id} delay={i * 120} className="h-full">
               <article className="group flex h-full flex-col overflow-hidden rounded-[14px] border border-line bg-white transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_18px_34px_-20px_rgba(10,37,64,0.3)]">

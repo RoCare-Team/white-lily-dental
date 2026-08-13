@@ -24,7 +24,7 @@ export const metadata = {
   openGraph: {
     title: "Contact White Lily Dental | Gurugram",
     description:
-      "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69 and 83 clinics in Gurugram.",
+      "Call, WhatsApp or send an appointment request to White Lily Dental's Sector 69 and 77 clinics in Gurugram.",
     url: "/contact",
     type: "website",
     images: ["/images/og-image.png"],

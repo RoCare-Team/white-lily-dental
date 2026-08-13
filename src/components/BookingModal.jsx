@@ -88,6 +88,9 @@ export default function BookingModal({
         treatment: sub?.name ?? service?.title ?? (plan ? "Dental Plan enquiry" : ""),
         doctor: doctor?.name ?? "",
         plan: plan?.name ?? "",
+        // Price is shown to the patient but not stored — the plan name is what
+        // the clinic searches on, and prices change.
+        planPrice: plan ? `₹${plan.price} ${plan.period}` : "",
         clinicId: params.get("clinic") ?? "",
       };
     },
@@ -253,7 +256,7 @@ export default function BookingModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-navy/60 p-4 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-navy/60 p-4 backdrop-blur-[2px] sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Book an appointment"
@@ -268,10 +271,10 @@ export default function BookingModal({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="wl-confirm relative my-auto w-full max-w-[620px] rounded-[18px] bg-white shadow-2xl outline-none"
+        className="wl-confirm relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[620px] flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl outline-none"
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-7">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
           <h2 className="text-[16.5px] font-bold leading-snug text-navy sm:text-[18px]">
             Book an Appointment at{" "}
             <span className="text-brand">{site.name}</span>
@@ -287,7 +290,7 @@ export default function BookingModal({
         </div>
 
         {/* Stepper */}
-        <ol className="flex items-start gap-1 px-5 pt-6 sm:px-7">
+        <ol className="flex shrink-0 items-start gap-1 px-5 pt-5 sm:px-6">
           {STEPS.map((s, index) => {
             const Icon = s.icon;
             const done = index < step;
@@ -321,7 +324,7 @@ export default function BookingModal({
           })}
         </ol>
 
-        <div className="px-5 pb-6 pt-6 sm:px-7 sm:pb-7">
+        <div className="flex-1 overflow-y-auto px-5 pb-6 pt-5 sm:px-6">
           {/* What the button that opened this was about — so the patient can
               see they are booking the right thing. */}
           {step < 3 && (treatment || context.doctor || context.plan) ? (
@@ -345,7 +348,14 @@ export default function BookingModal({
                 {context.plan ? (
                   <div className="flex gap-2">
                     <dt className="text-muted">Plan</dt>
-                    <dd className="font-semibold text-navy">{context.plan}</dd>
+                    <dd className="font-semibold text-navy">
+                      {context.plan}
+                      {context.planPrice ? (
+                        <span className="font-normal text-muted">
+                          {" "}({context.planPrice})
+                        </span>
+                      ) : null}
+                    </dd>
                   </div>
                 ) : null}
               </dl>

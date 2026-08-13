@@ -85,6 +85,7 @@ export default function StickyContactBar({ site, telHref, waHref }) {
           </a>
           <Link
             href="/contact"
+            data-book-appointment
             className="flex flex-col items-center justify-center gap-1 bg-deep py-2.5 text-[13px] font-semibold text-white active:bg-deep-600"
           >
             <CalendarCheck className="h-5 w-5" aria-hidden="true" />

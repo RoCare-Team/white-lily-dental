@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getClinics } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
+import { SLOT_HOLDING_STATUSES } from "@/lib/leads";
 import { availableSlots, formatTime, isValidDate } from "@/lib/slots";
 
 export const runtime = "nodejs";
@@ -35,7 +36,7 @@ export async function GET(request) {
     const leads = await getLeads();
     const taken = await leads
       .find(
-        { clinicId, slotDate: date, status: { $ne: "spam" } },
+        { clinicId, slotDate: date, status: { $in: SLOT_HOLDING_STATUSES } },
         { projection: { slotTime: 1 } }
       )
       .toArray();

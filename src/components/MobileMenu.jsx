@@ -165,7 +165,7 @@ export default function MobileMenu({
             </a>
             <p className="flex items-start gap-3 text-[13.5px] text-muted">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-coral" aria-hidden="true" />
-              Sector 69 &amp; 83, Gurugram
+              Sector 69 &amp; 77, Gurugram
             </p>
           </div>
         </nav>

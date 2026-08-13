@@ -42,7 +42,7 @@ export default async function CTASection({
         </div>
 
         <p className="text-[14px] text-brand-100/60">
-          Open {site.hours} · Sector 69 &amp; 83, Gurugram
+          Open {site.hours} · Sector 69 &amp; 77, Gurugram
         </p>
       </Container>
     </section>
