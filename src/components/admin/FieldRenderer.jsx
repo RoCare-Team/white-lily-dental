@@ -190,6 +190,9 @@ function IconPicker({ value, onChange, id }) {
   return (
     <div className="flex items-center gap-2.5">
       <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] bg-brand-50 text-brand">
+        {/* getIcon returns a module-level lucide component — nothing is
+            created per render, but the rule cannot see through the lookup. */}
+        {/* eslint-disable-next-line react-hooks/static-components */}
         <Preview className="h-5 w-5" aria-hidden="true" />
       </span>
       <select

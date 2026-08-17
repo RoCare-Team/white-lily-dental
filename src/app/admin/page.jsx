@@ -211,7 +211,7 @@ export default async function AdminDashboardPage() {
           tone="slate"
         />
         <StatCard
-          label="Plan enquiries"
+          label="Package requests"
           value={data.planCount}
           href="/admin/plan-enquiries"
           icon={Tag}

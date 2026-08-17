@@ -134,22 +134,18 @@ export default function BookingModal({
       event.preventDefault();
       event.stopPropagation();
 
-      setContext(readContext(trigger));
+      const next = readContext(trigger);
+      setContext(next);
+      if (next.clinicId && clinics.some((c) => c.id === next.clinicId)) {
+        setClinicId(next.clinicId);
+      }
+      if (next.treatment) setTreatment(next.treatment);
       setOpen(true);
     };
 
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [readContext]);
-
-  /* Apply whatever the trigger told us as soon as the wizard opens. */
-  useEffect(() => {
-    if (!open) return;
-    if (context.clinicId && clinics.some((c) => c.id === context.clinicId)) {
-      setClinicId(context.clinicId);
-    }
-    if (context.treatment) setTreatment(context.treatment);
-  }, [open, context, clinics]);
+  }, [readContext, clinics]);
 
   useEffect(() => {
     if (!open) return;
@@ -168,17 +164,13 @@ export default function BookingModal({
     };
   }, [open, close]);
 
-  /* Fetch availability whenever the clinic or the date changes. */
+  /* Fetch availability whenever the clinic or the date changes. The
+     handlers that change either one clear the old slots, so this effect only
+     ever writes state from its async callbacks. */
   useEffect(() => {
-    if (!clinicId || !date) {
-      setSlots([]);
-      return;
-    }
+    if (!clinicId || !date) return;
 
     let cancelled = false;
-    setLoadingSlots(true);
-    setError("");
-    setSlotTime("");
 
     fetch(`/api/slots?clinic=${encodeURIComponent(clinicId)}&date=${date}`)
       .then((response) => response.json())
@@ -385,7 +377,13 @@ export default function BookingModal({
                     <li key={item.id}>
                       <button
                         type="button"
-                        onClick={() => setClinicId(item.id)}
+                        onClick={() => {
+                          setClinicId(item.id);
+                          setSlots([]);
+                          setSlotTime("");
+                          setError("");
+                          setLoadingSlots(Boolean(date));
+                        }}
                         aria-pressed={selected}
                         className={`flex w-full items-center gap-4 rounded-[13px] border p-4 text-left transition-colors ${
                           selected
@@ -439,7 +437,13 @@ export default function BookingModal({
                 value={date}
                 min={window30.min}
                 max={window30.max}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(event) => {
+                  setDate(event.target.value);
+                  setSlots([]);
+                  setSlotTime("");
+                  setError("");
+                  setLoadingSlots(Boolean(event.target.value && clinicId));
+                }}
                 className={`${field} mt-1.5`}
               />
 

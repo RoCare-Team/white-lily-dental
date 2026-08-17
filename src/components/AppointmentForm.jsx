@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -46,41 +46,38 @@ export default function AppointmentForm({
   const [confirmation, setConfirmation] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    clinic:
-      clinics.find((c) => c.id === clinicParam)?.shortName ?? clinics[0].shortName,
-    treatment: "",
-    date: "",
-    message: "",
-    company: "", // honeypot — real patients never see or fill this
-  });
+  // The URL is known on the first render, so the prefill is the form's initial
+  // state rather than an effect that overwrites it a paint later.
+  const [form, setForm] = useState(() => {
+    let treatment = "";
+    let message = "";
 
-  useEffect(() => {
     if (plan) {
-      setForm((f) => ({
-        ...f,
-        treatment: "Dental Plan enquiry",
-        message: `I would like to know more about ${plan.name} (₹${plan.price} / year).`,
-      }));
+      treatment = "Dental Plan enquiry";
+      message = `I would like to know more about ${plan.name} (₹${plan.price} / year).`;
     } else if (subService) {
-      setForm((f) => ({ ...f, treatment: subService.name }));
+      treatment = subService.name;
     } else if (service) {
-      setForm((f) => ({ ...f, treatment: service.title }));
+      treatment = service.title;
     }
 
-    if (doctor) {
-      setForm((f) => ({
-        ...f,
-        message:
-          f.message ||
-          `I would like to book an appointment with ${doctor.name}.`,
-      }));
+    if (doctor && !message) {
+      message = `I would like to book an appointment with ${doctor.name}.`;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planParam, serviceParam, subParam, doctorParam]);
+
+    return {
+      name: "",
+      phone: "",
+      email: "",
+      clinic:
+        clinics.find((c) => c.id === clinicParam)?.shortName ??
+        clinics[0].shortName,
+      treatment,
+      date: "",
+      message,
+      company: "", // honeypot — real patients never see or fill this
+    };
+  });
 
   const update = (key) => (event) =>
     setForm((f) => ({ ...f, [key]: event.target.value }));
@@ -100,6 +97,15 @@ export default function AppointmentForm({
     ]
       .filter(Boolean)
       .join("\n");
+
+  // Errors render below a long form — scroll them into view so a failed
+  // submit is never mistaken for nothing happening.
+  const errorRef = useRef(null);
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [error]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -292,6 +298,7 @@ export default function AppointmentForm({
             name="name"
             type="text"
             required
+            minLength={2}
             autoComplete="name"
             placeholder="Your full name"
             value={form.name}
@@ -310,6 +317,7 @@ export default function AppointmentForm({
             type="tel"
             required
             inputMode="tel"
+            minLength={8}
             autoComplete="tel"
             pattern="[0-9+\s-]{8,15}"
             placeholder="+91 XXXXX XXXXX"
@@ -448,6 +456,7 @@ export default function AppointmentForm({
 
       {error ? (
         <p
+          ref={errorRef}
           role="alert"
           className="mt-5 flex items-start gap-2.5 rounded-xl border border-coral/40 bg-coral-50 p-4 text-[13.5px] leading-relaxed text-navy"
         >

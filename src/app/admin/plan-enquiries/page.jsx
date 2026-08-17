@@ -1,12 +1,15 @@
 import LeadsBoard from "@/components/admin/LeadsBoard";
 import PageTitle from "@/components/admin/PageTitle";
 import { loadLeadPage } from "@/lib/loadLeads";
+import { getSettings } from "@/lib/content";
 
-export const metadata = { title: "Plan enquiries" };
+export const metadata = { title: "Package requests" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPlanEnquiriesPage({ searchParams }) {
   const params = (await searchParams) ?? {};
+  // Used to sign the ready-made WhatsApp reply.
+  const settings = await getSettings();
 
   let data = null;
   let error = null;
@@ -22,8 +25,8 @@ export default async function AdminPlanEnquiriesPage({ searchParams }) {
   return (
     <>
       <PageTitle
-        title="Dental plan enquiries"
-        subtitle="Patients asking about the annual family packages, with the plan they picked."
+        title="Package requests"
+        subtitle="Patients asking about the annual dental plans, with the package they picked."
       />
 
       {error ? (
@@ -36,6 +39,7 @@ export default async function AdminPlanEnquiriesPage({ searchParams }) {
       ) : (
         <LeadsBoard
           kind="plan"
+          siteName={settings.name}
           basePath="/admin/plan-enquiries"
           initialData={data}
           initialFilters={{ status: params.status ?? "", q: params.q ?? "" }}

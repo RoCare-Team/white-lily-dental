@@ -194,6 +194,8 @@ export function serializeLead(doc) {
     message: doc.message ?? "",
     source: doc.source ?? "",
     status: doc.status ?? "new",
+    // When a member of staff first opened it — absent means unread.
+    seenAt: doc.seenAt ? new Date(doc.seenAt).toISOString() : null,
     notes: doc.notes ?? "",
     createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : null,
     updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : null,

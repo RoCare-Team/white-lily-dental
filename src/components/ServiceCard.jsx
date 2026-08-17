@@ -41,6 +41,9 @@ export default function ServiceCard({ service, variant = "card" }) {
           borderRadius: "100%",
         }}
       />
+      {/* getIcon returns a module-level lucide component — nothing is
+          created per render, but the rule cannot see through the lookup. */}
+      {/* eslint-disable-next-line react-hooks/static-components */}
       <Icon
         className="relative h-6 w-6 -translate-y-0.5"
         style={{ color: accent.fg }}

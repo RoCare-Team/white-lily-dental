@@ -7,6 +7,12 @@ import { AlertCircle, ArrowLeft, Check, Loader2, Save, Trash2 } from "lucide-rea
 
 import FieldRenderer from "@/components/admin/FieldRenderer";
 
+/** Fields that need the full width of the form to be usable. */
+const FULL_WIDTH = new Set(["textarea", "paragraphs", "list", "image"]);
+
+/** Fields big enough to deserve a card of their own. */
+const BLOCK_TYPES = new Set(["repeater", "group"]);
+
 /**
  * The one editing screen for every content type. Fields, validation hints and
  * labels all come from the schema, so no content type needs its own form.
@@ -114,6 +120,9 @@ export default function RecordForm({
     }
   };
 
+  const simpleFields = schema.fields.filter((f) => !BLOCK_TYPES.has(f.type));
+  const blockFields = schema.fields.filter((f) => BLOCK_TYPES.has(f.type));
+
   const heading =
     mode === "singleton"
       ? schema.label
@@ -208,10 +217,33 @@ export default function RecordForm({
       ) : null}
 
       <div className="space-y-5">
-        {schema.fields.map((field) => (
+        {/* The plain fields share one card in two columns — a card per field
+            turned a service into a wall of seventeen boxes. */}
+        {simpleFields.length ? (
+          <div className="rounded-[13px] border border-line bg-white p-4 sm:p-6">
+            <div className="grid gap-5 sm:grid-cols-2">
+              {simpleFields.map((field) => (
+                <div
+                  key={field.name}
+                  className={FULL_WIDTH.has(field.type) ? "sm:col-span-2" : ""}
+                >
+                  <FieldRenderer
+                    field={field}
+                    value={value[field.name]}
+                    onChange={(next) => setField(field.name, next)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Repeaters and groups are substantial on their own, so each keeps
+            its own card with its label as the heading. */}
+        {blockFields.map((field) => (
           <div
             key={field.name}
-            className="rounded-[13px] border border-line bg-white p-4 sm:p-5"
+            className="rounded-[13px] border border-line bg-white p-4 sm:p-6"
           >
             <FieldRenderer
               field={field}

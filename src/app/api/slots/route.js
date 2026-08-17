@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getClinics } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
 import { SLOT_HOLDING_STATUSES } from "@/lib/leads";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { availableSlots, formatTime, isValidDate } from "@/lib/slots";
 
 export const runtime = "nodejs";
@@ -15,6 +16,19 @@ export const dynamic = "force-dynamic";
  * from the next patient's list.
  */
 export async function GET(request) {
+  // Read-only, but every call hits the database — a generous cap keeps a
+  // hammering script from becoming a load problem.
+  const limited = rateLimit(`slots:${clientIp(request)}`, {
+    limit: 90,
+    windowMs: 60 * 1000,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfter) } }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const clinicId = searchParams.get("clinic");
   const date = searchParams.get("date");

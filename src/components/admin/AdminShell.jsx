@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -55,15 +55,33 @@ const ALL_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/appointments", label: "Appointments", icon: CalendarCheck },
   { href: "/admin/leads", label: "Enquiries", icon: Inbox },
-  { href: "/admin/plan-enquiries", label: "Plan enquiries", icon: Tag },
+  { href: "/admin/plan-enquiries", label: "Package requests", icon: Tag },
   ...CONTENT_LINKS,
   ...SETTINGS_LINKS,
 ];
 
-export default function AdminShell({ email, children }) {
+export default function AdminShell({ email, badges = {}, children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  /* The server counts them; opening a screen clears its own badge straight
+     away, without waiting for a refetch. */
+  const [counts, setCounts] = useState(badges);
+  const [lastBadges, setLastBadges] = useState(badges);
+  if (lastBadges !== badges) {
+    setLastBadges(badges);
+    setCounts(badges);
+  }
+
+  useEffect(() => {
+    const onSeen = (event) => {
+      const key = event.detail;
+      setCounts((current) => ({ ...current, [key]: 0 }));
+    };
+    document.addEventListener("wl:leads-seen", onSeen);
+    return () => document.removeEventListener("wl:leads-seen", onSeen);
+  }, []);
 
   // The sign-in screen has no navigation — it renders on its own.
   if (pathname === "/admin/login") return children;
@@ -99,7 +117,7 @@ export default function AdminShell({ email, children }) {
       </div>
 
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
-        <NavGroup>
+        <NavGroup title="Patients">
           <NavItem
             href="/admin"
             label="Dashboard"
@@ -111,6 +129,8 @@ export default function AdminShell({ email, children }) {
             href="/admin/appointments"
             label="Appointments"
             icon={CalendarCheck}
+            badge={counts.appointments}
+            badgeTitle="Not yet opened"
             active={isActive("/admin/appointments")}
             onNavigate={() => setMenuOpen(false)}
           />
@@ -118,13 +138,17 @@ export default function AdminShell({ email, children }) {
             href="/admin/leads"
             label="Enquiries"
             icon={Inbox}
+            badge={counts.enquiries}
+            badgeTitle="Not yet opened"
             active={isActive("/admin/leads")}
             onNavigate={() => setMenuOpen(false)}
           />
           <NavItem
             href="/admin/plan-enquiries"
-            label="Plan enquiries"
+            label="Package requests"
             icon={Tag}
+            badge={counts.packages}
+            badgeTitle="Not yet opened"
             active={isActive("/admin/plan-enquiries")}
             onNavigate={() => setMenuOpen(false)}
           />
@@ -179,9 +203,9 @@ export default function AdminShell({ email, children }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#f6f8fb]">
+    <div className="wl-admin min-h-screen bg-[#f6f8fb]">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-[252px] bg-[#0e1c2f] lg:block">
+      <aside className="wl-admin-sidebar fixed inset-y-0 left-0 hidden w-[252px] bg-[#0e1c2f] lg:block">
         {nav}
       </aside>
 
@@ -194,7 +218,7 @@ export default function AdminShell({ email, children }) {
             onClick={() => setMenuOpen(false)}
             className="absolute inset-0 bg-navy/60"
           />
-          <div className="relative h-full w-[272px] bg-[#0e1c2f] shadow-2xl">
+          <div className="wl-admin-sidebar relative h-full w-[272px] bg-[#0e1c2f] shadow-2xl">
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
@@ -258,13 +282,13 @@ function NavGroup({ title, children }) {
   );
 }
 
-function NavItem({ href, label, icon: Icon, active, onNavigate }) {
+function NavItem({ href, label, icon: Icon, active, badge, badgeTitle, onNavigate }) {
   return (
     <Link
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`relative flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] transition-colors ${
+      className={`group relative flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 ${
         active
           ? "bg-white/10 font-semibold text-white"
           : "font-medium text-white/60 hover:bg-white/5 hover:text-white"
@@ -277,7 +301,18 @@ function NavItem({ href, label, icon: Icon, active, onNavigate }) {
         />
       ) : null}
       {Icon ? <Icon className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
-      {label}
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+
+      {/* Only shown when there is something to act on — a permanent "0" is noise */}
+      {badge > 0 ? (
+        <span
+          title={badgeTitle}
+          className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] font-bold text-white"
+        >
+          {badge > 99 ? "99+" : badge}
+          <span className="sr-only"> {badgeTitle}</span>
+        </span>
+      ) : null}
     </Link>
   );
 }

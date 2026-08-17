@@ -1445,25 +1445,3 @@ export const services = [
     related: ["gums-treatment", "cosmetic-dentistry", "braces-treatment"],
   },
 ];
-
-export const serviceSlugs = services.map((s) => s.slug);
-
-export function getService(slug) {
-  return services.find((s) => s.slug === slug);
-}
-
-export function getRelatedServices(slug) {
-  const service = getService(slug);
-  if (!service) return [];
-  return service.related.map((s) => getService(s)).filter(Boolean);
-}
-
-export function getSubService(serviceSlug, subSlug) {
-  const service = getService(serviceSlug);
-  if (!service) return null;
-  return service.subServices.find((s) => s.slug === subSlug) || null;
-}
-
-export const subServiceParams = services.flatMap((service) =>
-  service.subServices.map((sub) => ({ slug: service.slug, sub: sub.slug }))
-);

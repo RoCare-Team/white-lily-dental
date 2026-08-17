@@ -118,6 +118,19 @@
     }
   }
 
+  /* Admin panel: one visible focus ring for every control, so keyboard
+     users can always see where they are. Mouse users see nothing extra. */
+  .wl-admin :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* The dark sidebar needs a light ring to be visible against navy */
+  .wl-admin-sidebar :is(a, button):focus-visible {
+    outline-color: #ffffff;
+  }
+
   /* Lighter sections: 44px mobile → 52px desktop */
   .wl-section-sm {
     padding-block: 2.75rem;

@@ -117,6 +117,9 @@ export default async function ServicePage({ params }) {
             </nav>
 
             <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-1.5 text-[14px] font-semibold text-brand-dark">
+              {/* getIcon returns a module-level lucide component — nothing is
+                  created per render, but the rule cannot see through the lookup. */}
+              {/* eslint-disable-next-line react-hooks/static-components */}
               <Icon className="h-4 w-4" aria-hidden="true" />
               Treatment in Gurugram
             </span>

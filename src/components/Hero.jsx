@@ -8,7 +8,7 @@ import { getContactLinks, getTestimonials } from "@/lib/content";
 const averageRating = (testimonials) =>
   (
     testimonials.reduce((sum, t) => sum + Number(t.rating || 0), 0) /
-    (testimonials.length || 1)
+    (testimonials.length || 1)  
   ).toFixed(1);
 
 const PHOTO = "/images/banner4.png";

@@ -14,7 +14,7 @@ import { Table2 } from "lucide-react";
 const SERIES = [
   { key: "appointments", label: "Appointments", color: "#1668c7" },
   { key: "enquiries", label: "Enquiries", color: "#d95653" },
-  { key: "plans", label: "Plan enquiries", color: "#12a594" },
+  { key: "plans", label: "Package requests", color: "#12a594" },
 ];
 
 const INK = { primary: "#0a2540", muted: "#5c6f85", grid: "#e5eaf1" };
@@ -120,7 +120,7 @@ function MonthlyChart({ months }) {
             aria-labelledby={titleId}
           >
             <title id={titleId}>
-              Appointments, enquiries and plan enquiries per month for the last
+              Appointments, enquiries and package requests per month for the last
               twelve months
             </title>
 

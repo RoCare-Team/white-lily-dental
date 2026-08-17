@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarX,
+  Copy,
   Download,
   Inbox,
   RotateCcw,
@@ -64,10 +65,71 @@ function formatSlotTime(time) {
   return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
+/**
+ * A first reply, already written. Staff open WhatsApp with this in the box and
+ * either send it or edit it — nobody retypes what the patient already told us.
+ */
+function replyText(lead, siteName) {
+  const first = String(lead.name || "").trim().split(" ")[0];
+  const about =
+    lead.plan ||
+    (lead.slotDate
+      ? `your appointment on ${formatDay(lead.slotDate)} at ${formatSlotTime(lead.slotTime)}`
+      : lead.treatment) ||
+    "your enquiry";
+
+  return [
+    `Hello${first ? " " + first : ""}, this is ${siteName}.`,
+    lead.slotDate
+      ? `We are confirming ${about} at ${lead.clinic}.`
+      : `Thank you for your enquiry about ${about}.`,
+    "How can we help you further?",
+  ].join(" ");
+}
+
+/** Everything about a lead as plain text, for pasting elsewhere. */
+function leadAsText(lead) {
+  return [
+    `Name: ${lead.name}`,
+    `Phone: ${lead.phone}`,
+    lead.email ? `Email: ${lead.email}` : null,
+    lead.clinic ? `Clinic: ${lead.clinic}` : null,
+    lead.slotDate
+      ? `Appointment: ${formatDay(lead.slotDate)} at ${formatSlotTime(lead.slotTime)}`
+      : null,
+    lead.treatment ? `Treatment: ${lead.treatment}` : null,
+    lead.doctor ? `Doctor: ${lead.doctor}` : null,
+    lead.plan ? `Package: ${lead.plan}` : null,
+    lead.message ? `Message: ${lead.message}` : null,
+    `Received: ${formatDate(lead.createdAt)}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function digitsOnly(phone) {
   const digits = String(phone ?? "").replace(/\D/g, "");
   // Indian numbers are usually typed without the country code.
   return digits.length === 10 ? `91${digits}` : digits;
+}
+
+/** The statuses a receptionist reaches for during a call. */
+const QUICK_STATUSES = [
+  { value: "contacted", label: "Contacted" },
+  { value: "booked", label: "Booked" },
+  { value: "closed", label: "Closed" },
+  { value: "spam", label: "Spam" },
+];
+
+/** Puts the lead on the clipboard, with a fallback for insecure origins. */
+async function copyLead(lead) {
+  const text = leadAsText(lead);
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Lead details copied.");
+  } catch {
+    window.prompt("Copy the details below:", text);
+  }
 }
 
 const WHEN_FILTERS = [
@@ -82,6 +144,7 @@ export default function LeadsBoard({
   initialFilters,
   kind = "enquiry",
   basePath = "/admin/leads",
+  siteName = "White Lily Dental",
 }) {
   const isAppointments = kind === "appointment";
   const isPlans = kind === "plan";
@@ -94,10 +157,13 @@ export default function LeadsBoard({
   const [pending, setPending] = useState("");
   const firstRender = useRef(true);
 
-  // The server sends fresh rows on every navigation — adopt them.
-  useEffect(() => {
+  // The server sends fresh rows on every navigation — adopt them during
+  // render, so the previous page's rows never flash on screen.
+  const [lastData, setLastData] = useState(initialData);
+  if (lastData !== initialData) {
+    setLastData(initialData);
     setLeads(initialData.leads);
-  }, [initialData]);
+  }
 
   const status = initialFilters.status;
 
@@ -122,6 +188,9 @@ export default function LeadsBoard({
       if (search !== initialFilters.q) pushQuery({ q: search });
     }, 400);
     return () => clearTimeout(timer);
+    // Deliberately keyed on `search` alone: including pushQuery would rebuild
+    // the timer on every render and the debounce would never elapse. Each
+    // keystroke re-runs this with a fresh closure, so nothing goes stale.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
@@ -130,6 +199,27 @@ export default function LeadsBoard({
     const all = Object.values(counts).reduce((sum, n) => sum + n, 0);
     return { all, ...counts };
   }, [initialData.counts]);
+
+  /* Opening the screen clears its badge, the way an inbox tab does. The rows
+     keep their "new" dots for this visit — the page was already rendered — so
+     staff can still see which ones arrived since last time. */
+  const seenSignature = leads.filter((l) => !l.seenAt).length;
+  useEffect(() => {
+    if (!seenSignature) return;
+
+    const badgeKey =
+      kind === "appointment" ? "appointments" : kind === "plan" ? "packages" : "enquiries";
+
+    document.dispatchEvent(new CustomEvent("wl:leads-seen", { detail: badgeKey }));
+
+    fetch("/api/admin/leads/seen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind }),
+    }).catch(() => {
+      /* A failed read-receipt is not worth interrupting anyone for. */
+    });
+  }, [seenSignature, kind]);
 
   const patchLead = async (id, changes) => {
     setPending(id);
@@ -279,7 +369,85 @@ export default function LeadsBoard({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Phones get cards — an 820px table on a 390px screen is a
+              side-scroll nobody discovers. */}
+          <ul className="divide-y divide-line/70 md:hidden">
+            {leads.map((lead) => (
+              <li key={lead.id}>
+                <button
+                  type="button"
+                  onClick={() => setActive(lead)}
+                  className={`flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-brand-50/50 ${
+                    lead.status === "cancelled" ? "opacity-55" : ""
+                  }`}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      {!lead.seenAt ? (
+                        <span
+                          title="Not yet opened"
+                          className="inline-block h-2 w-2 shrink-0 rounded-full bg-coral"
+                        />
+                      ) : null}
+                      <span
+                        className={`truncate text-[14.5px] text-navy ${
+                          lead.seenAt ? "font-semibold" : "font-bold"
+                        }`}
+                      >
+                        {lead.name}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${
+                          STATUS_STYLES[lead.status] ?? STATUS_STYLES.new
+                        }`}
+                      >
+                        {lead.status}
+                      </span>
+                    </span>
+
+                    <span className="mt-0.5 block text-[13px] text-muted">
+                      {lead.phone}
+                    </span>
+
+                    <span className="mt-1.5 block text-[13px] text-navy">
+                      {isPlans
+                        ? lead.plan || "—"
+                        : lead.treatment || lead.plan || "—"}
+                      {lead.doctor ? (
+                        <span className="text-muted"> · {lead.doctor}</span>
+                      ) : null}
+                    </span>
+
+                    <span className="mt-1 block text-[12.5px] text-muted">
+                      {lead.slotDate
+                        ? `${formatDay(lead.slotDate)} · ${formatSlotTime(lead.slotTime)}`
+                        : formatDate(lead.createdAt)}
+                      {lead.clinic ? ` · ${lead.clinic}` : ""}
+                    </span>
+                  </span>
+
+                  <span className="flex shrink-0 gap-1">
+                    <IconLink
+                      href={`tel:${lead.phone}`}
+                      title={`Call ${lead.name}`}
+                      icon={Phone}
+                    />
+                    <IconLink
+                      href={`https://wa.me/${digitsOnly(lead.phone)}?text=${encodeURIComponent(
+                        replyText(lead, siteName)
+                      )}`}
+                      title={`WhatsApp ${lead.name}`}
+                      icon={MessageCircle}
+                      external
+                    />
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[820px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-line bg-[#fafbfc] text-[12px] font-semibold uppercase tracking-wide text-muted">
@@ -323,7 +491,22 @@ export default function LeadsBoard({
                       )}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="block font-semibold text-navy">{lead.name}</span>
+                      <span className="flex items-center gap-2">
+                        {/* Unread marker — clears the moment the row is opened */}
+                        {!lead.seenAt ? (
+                          <span
+                            title="Not yet opened"
+                            className="inline-block h-2 w-2 shrink-0 rounded-full bg-coral"
+                          />
+                        ) : null}
+                        <span
+                          className={`text-navy ${
+                            lead.seenAt ? "font-semibold" : "font-bold"
+                          }`}
+                        >
+                          {lead.name}
+                        </span>
+                      </span>
                       <span className="block text-[13px] text-muted">{lead.phone}</span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -372,7 +555,9 @@ export default function LeadsBoard({
                           icon={Phone}
                         />
                         <IconLink
-                          href={`https://wa.me/${digitsOnly(lead.phone)}`}
+                          href={`https://wa.me/${digitsOnly(lead.phone)}?text=${encodeURIComponent(
+                            replyText(lead, siteName)
+                          )}`}
                           title={`WhatsApp ${lead.name}`}
                           icon={MessageCircle}
                           external
@@ -401,6 +586,7 @@ export default function LeadsBoard({
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
@@ -431,8 +617,10 @@ export default function LeadsBoard({
       {active ? (
         <LeadDrawer
           lead={active}
+          siteName={siteName}
           busy={pending === active.id}
           onClose={() => setActive(null)}
+          onStatus={(status) => patchLead(active.id, { status })}
           onSaveNotes={(notes) => patchLead(active.id, { notes })}
           onCancelBooking={() => {
             if (
@@ -498,17 +686,23 @@ function PageButton({ children, disabled, onClick }) {
 
 function LeadDrawer({
   lead,
+  siteName,
   busy,
   onClose,
   onSaveNotes,
+  onStatus,
   onCancelBooking,
   onRestoreBooking,
 }) {
   const [notes, setNotes] = useState(lead.notes ?? "");
 
-  useEffect(() => {
+  // Opening a different lead swaps the notes; done during render so the
+  // previous lead's notes are never shown against the new one.
+  const [lastLead, setLastLead] = useState(lead);
+  if (lastLead !== lead) {
+    setLastLead(lead);
     setNotes(lead.notes ?? "");
-  }, [lead]);
+  }
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -577,9 +771,12 @@ function LeadDrawer({
               Call
             </a>
             <a
-              href={`https://wa.me/${digitsOnly(lead.phone)}`}
+              href={`https://wa.me/${digitsOnly(lead.phone)}?text=${encodeURIComponent(
+                replyText(lead, siteName)
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
+              title="Opens WhatsApp with a reply already written"
               className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-[10px] bg-whatsapp text-[14px] font-semibold text-white transition-opacity hover:opacity-90"
             >
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
@@ -597,7 +794,45 @@ function LeadDrawer({
             ) : null}
           </div>
 
-          <dl className="mt-6 divide-y divide-line/70 border-y border-line/70">
+          {/* One tap for the statuses staff actually use, so nobody hunts
+              through the dropdown mid-call. */}
+          <div className="mt-5">
+            <p className="text-[12px] font-semibold uppercase tracking-wide text-muted">
+              Mark as
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {QUICK_STATUSES.map((option) => {
+                const current = lead.status === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    disabled={busy || current}
+                    onClick={() => onStatus(option.value)}
+                    className={`inline-flex h-9 items-center rounded-full border px-3.5 text-[13px] font-semibold transition-colors disabled:cursor-default ${
+                      current
+                        ? `border-transparent ${STATUS_STYLES[option.value]}`
+                        : "border-line bg-white text-navy hover:border-brand hover:text-brand"
+                    }`}
+                  >
+                    {current ? "✓ " : ""}
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => copyLead(lead)}
+            className="mt-4 inline-flex h-9 items-center gap-2 rounded-[9px] border border-line px-3 text-[13px] font-semibold text-muted transition-colors hover:border-brand hover:text-brand"
+          >
+            <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+            Copy all details
+          </button>
+
+          <dl className="mt-5 divide-y divide-line/70 border-y border-line/70">
             {rows.map(([term, value]) => (
               <div key={term} className="flex gap-4 py-2.5 text-[14px]">
                 <dt className="w-[130px] shrink-0 text-muted">{term}</dt>

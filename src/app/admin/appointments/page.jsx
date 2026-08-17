@@ -1,12 +1,15 @@
 import LeadsBoard from "@/components/admin/LeadsBoard";
 import PageTitle from "@/components/admin/PageTitle";
 import { loadLeadPage } from "@/lib/loadLeads";
+import { getSettings } from "@/lib/content";
 
 export const metadata = { title: "Appointments" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminAppointmentsPage({ searchParams }) {
   const params = (await searchParams) ?? {};
+  // Used to sign the ready-made WhatsApp reply.
+  const settings = await getSettings();
 
   let data = null;
   let error = null;
@@ -36,6 +39,7 @@ export default async function AdminAppointmentsPage({ searchParams }) {
       ) : (
         <LeadsBoard
           kind="appointment"
+          siteName={settings.name}
           basePath="/admin/appointments"
           initialData={data}
           initialFilters={{

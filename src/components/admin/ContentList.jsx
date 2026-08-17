@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -29,9 +29,13 @@ export default function ContentList({ typeKey, schema, items }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  // The server sends a fresh list on every navigation — adopt it during
+  // render instead of after paint, so the old rows never flash.
+  const [lastItems, setLastItems] = useState(items);
+  if (lastItems !== items) {
+    setLastItems(items);
     setRows(items);
-  }, [items]);
+  }
 
   const move = async (index, delta) => {
     const target = index + delta;

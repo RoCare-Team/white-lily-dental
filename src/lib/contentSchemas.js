@@ -415,9 +415,6 @@ export const SINGLETONS = {
   },
 };
 
-export const CONTENT_KEYS = Object.keys(CONTENT_TYPES);
-export const SINGLETON_KEYS = Object.keys(SINGLETONS);
-
 /** Mongo collection name for a content key. Singletons share one collection. */
 export function collectionNameFor(key) {
   return `content_${key}`;

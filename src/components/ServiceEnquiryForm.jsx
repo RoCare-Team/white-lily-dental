@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, CalendarCheck, CheckCircle2, Loader2, Phone } from "lucide-react";
 
 
@@ -25,6 +25,15 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
   });
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // A long service page can leave this sidebar form off-screen; bring the
+  // message to the patient rather than hoping they scroll back to it.
+  const errorRef = useRef(null);
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -130,6 +139,7 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
             id="sf-name"
             type="text"
             required
+            minLength={2}
             autoComplete="name"
             placeholder="Your name"
             value={form.name}
@@ -147,6 +157,7 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
             type="tel"
             required
             inputMode="tel"
+            minLength={8}
             autoComplete="tel"
             pattern="[0-9+\s-]{8,15}"
             placeholder="+91 XXXXX XXXXX"
@@ -202,6 +213,20 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
         />
       </div>
 
+      {error ? (
+        <p
+          ref={errorRef}
+          role="alert"
+          className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-coral/40 bg-coral-50 p-3.5 text-[14px] leading-relaxed text-navy"
+        >
+          <AlertCircle
+            className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral-dark"
+            aria-hidden="true"
+          />
+          {error}
+        </p>
+      ) : null}
+
       <button
         type="submit"
         disabled={busy}
@@ -222,19 +247,6 @@ export default function ServiceEnquiryForm({ treatment, clinics, site, telHref }
         <Phone className="h-[18px] w-[18px]" aria-hidden="true" />
         {site.phoneDisplay}
       </a>
-
-      {error ? (
-        <p
-          role="alert"
-          className="mt-4 flex items-start gap-2.5 rounded-[10px] border border-coral/40 bg-coral-50 p-3.5 text-[14px] leading-relaxed text-navy"
-        >
-          <AlertCircle
-            className="mt-0.5 h-4.5 w-4.5 shrink-0 text-coral-dark"
-            aria-hidden="true"
-          />
-          {error}
-        </p>
-      ) : null}
 
     </form>
   );

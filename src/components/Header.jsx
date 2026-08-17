@@ -25,10 +25,14 @@ export default function Header({ services, navLinks, site, telHref }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
+  // Adjusting state while rendering rather than in an effect: React re-runs
+  // this component immediately without painting the stale open menu first.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setMegaOpen(false);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     const onKey = (e) => {

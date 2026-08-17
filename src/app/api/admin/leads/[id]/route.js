@@ -41,17 +41,30 @@ export async function PATCH(request, { params }) {
     update.notes = String(body.notes).slice(0, 2000);
   }
 
-  if (update.status === undefined && update.notes === undefined) {
+  // Opening a lead marks it read. Only ever set once, so the badge counts
+  // "never looked at", not "not looked at recently".
+  const markSeen = body?.seen === true;
+  if (markSeen) update.seenAt = new Date();
+
+  if (
+    update.status === undefined &&
+    update.notes === undefined &&
+    !markSeen
+  ) {
     return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   }
 
   try {
     const leads = await getLeads();
-    const doc = await leads.findOneAndUpdate(
-      { _id },
-      { $set: update },
-      { returnDocument: "after" }
-    );
+    // $min keeps the earliest value, so re-opening a lead never rewrites when
+    // it was first read. On a missing field it simply sets it.
+    const { seenAt, ...always } = update;
+    const operations = { $set: always };
+    if (seenAt) operations.$min = { seenAt };
+
+    const doc = await leads.findOneAndUpdate({ _id }, operations, {
+      returnDocument: "after",
+    });
     if (!doc) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
     return NextResponse.json({ lead: serializeLead(doc) });
   } catch (error) {
