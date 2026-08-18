@@ -26,7 +26,7 @@ export default async function AdminAppointmentsPage({ searchParams }) {
     <>
       <PageTitle
         title="Appointments"
-        subtitle="Slots patients have reserved through the booking wizard, in clinic order."
+        subtitle="Every appointment request: slots reserved through the booking wizard, and treatment-page requests still waiting for a time."
       />
 
       {error ? (
@@ -45,7 +45,7 @@ export default async function AdminAppointmentsPage({ searchParams }) {
           initialFilters={{
             status: params.status ?? "",
             q: params.q ?? "",
-            when: params.when ?? "upcoming",
+            when: params.when ?? "all",
           }}
         />
       )}

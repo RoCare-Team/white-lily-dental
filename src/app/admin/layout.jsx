@@ -18,21 +18,29 @@ async function loadBadges() {
 
     // Unread, not "new" — the badge clears the moment staff open the lead,
     // the way an inbox does. Changing the status is a separate decision.
-    const unread = { seenAt: { $exists: false } };
+    // Unopened and not yet finished: a completed lead has moved to Clients,
+    // so it must leave the badge too.
+    const unread = { seenAt: { $exists: false }, status: { $ne: "complete" } };
 
-    const [appointments, enquiries, packages] = await Promise.all([
-      // Only appointments still to come: the screen opens on "Upcoming", so a
-      // badge counting past ones would point at an empty list.
-      leads.countDocuments({ ...unread, slotDate: { $gte: todayKey() } }),
+    const [appointments, contact, packages] = await Promise.all([
+      // Slots still to come, plus treatment-page requests with no time chosen.
+      // A badge counting past appointments would point at an empty list.
+      leads.countDocuments({
+        ...unread,
+        $or: [
+          { slotDate: { $gte: todayKey() } },
+          { slotDate: { $exists: false }, source: "service-enquiry" },
+        ],
+      }),
       leads.countDocuments({
         ...unread,
         slotDate: { $exists: false },
-        source: { $ne: "plan-enquiry" },
+        source: { $nin: ["plan-enquiry", "service-enquiry"] },
       }),
       leads.countDocuments({ ...unread, source: "plan-enquiry" }),
     ]);
 
-    return { appointments, enquiries, packages };
+    return { appointments, contact, packages };
   } catch (error) {
     console.error("Sidebar badges unavailable:", error.message);
     return {};

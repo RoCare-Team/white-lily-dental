@@ -21,7 +21,7 @@ const COLUMNS = [
   ["Message", (l) => l.message],
   ["Source", (l) => l.source],
   ["Status", (l) => l.status],
-  ["Notes", (l) => l.notes],
+  ["Remark", (l) => l.notes],
 ];
 
 /**

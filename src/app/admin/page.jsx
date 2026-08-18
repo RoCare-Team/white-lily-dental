@@ -34,9 +34,14 @@ async function loadOverview() {
   const leads = await getLeads();
   const today = todayKey();
   // Same three buckets the screens use, so the numbers agree with the lists.
-  const enquiryOnly = {
+  // A treatment-page request is an appointment too — it just has no time yet.
+  const appointmentOnly = {
+    $or: [{ slotDate: { $exists: true } }, { source: "service-enquiry" }],
+  };
+  // Catch-all: whatever is neither an appointment request nor a package one.
+  const contactOnly = {
     slotDate: { $exists: false },
-    source: { $ne: "plan-enquiry" },
+    source: { $nin: ["plan-enquiry", "service-enquiry"] },
   };
   const planOnly = { source: "plan-enquiry" };
 
@@ -49,12 +54,18 @@ async function loadOverview() {
 
   const [totalLeads, newLeads, planCount, upcoming, todayCount, recent, byMonth, byTreatment] =
     await Promise.all([
-      leads.countDocuments(enquiryOnly),
-      leads.countDocuments({ ...enquiryOnly, status: "new" }),
-      leads.countDocuments(planOnly),
-      leads.countDocuments({ slotDate: { $gte: today } }),
-      leads.countDocuments({ slotDate: today }),
-      leads.find(enquiryOnly).sort({ createdAt: -1 }).limit(6).toArray(),
+      // The three inboxes hold everything not yet finished; a completed lead
+      // has moved to Clients. These match exactly what each screen lists.
+      leads.countDocuments({ ...contactOnly, status: { $ne: "complete" } }),
+      leads.countDocuments({ status: "complete" }),
+      leads.countDocuments({ ...planOnly, status: { $ne: "complete" } }),
+      leads.countDocuments({ ...appointmentOnly, status: { $ne: "complete" } }),
+      leads.countDocuments({ slotDate: today, status: { $nin: ["cancelled", "spam"] } }),
+      leads
+        .find({ ...contactOnly, status: { $ne: "complete" } })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .toArray(),
 
       // One pass, split into the same three buckets the screens use.
       leads
@@ -74,12 +85,17 @@ async function loadOverview() {
                   $switch: {
                     branches: [
                       {
-                        case: { $gt: [{ $ifNull: ["$slotDate", ""] }, ""] },
-                        then: "appointments",
-                      },
-                      {
                         case: { $eq: ["$source", "plan-enquiry"] },
                         then: "plans",
+                      },
+                      {
+                        case: {
+                          $or: [
+                            { $gt: [{ $ifNull: ["$slotDate", ""] }, ""] },
+                            { $eq: ["$source", "service-enquiry"] },
+                          ],
+                        },
+                        then: "appointments",
                       },
                     ],
                     default: "enquiries",
@@ -197,14 +213,14 @@ export default async function AdminDashboardPage() {
           tone={data.todayCount > 0 ? "teal" : "slate"}
         />
         <StatCard
-          label="Upcoming appointments"
+          label="Appointment requests"
           value={data.upcoming}
           href="/admin/appointments"
           icon={CalendarCheck}
           tone="brand"
         />
         <StatCard
-          label="Enquiries"
+          label="Contact messages"
           value={data.totalLeads}
           href="/admin/leads"
           icon={Inbox}
@@ -218,11 +234,11 @@ export default async function AdminDashboardPage() {
           tone="slate"
         />
         <StatCard
-          label="Awaiting reply"
+          label="Clients"
           value={data.newLeads}
-          href="/admin/leads?status=new"
+          href="/admin/clients"
           icon={Users}
-          tone={data.newLeads > 0 ? "coral" : "slate"}
+          tone="slate"
         />
       </div>
 
@@ -231,15 +247,15 @@ export default async function AdminDashboardPage() {
       <div className="mt-6 grid gap-5 lg:grid-cols-5">
         <Panel
           className="lg:col-span-3"
-          title="Latest enquiries"
-          subtitle="The six most recent enquiries. Booked slots are under Appointments."
+          title="Latest contact messages"
+          subtitle="The six newest Contact page messages that are not finished yet."
           action={{ href: "/admin/leads", label: "View all" }}
         >
           {data.recent.length === 0 ? (
             <EmptyState
               icon={Inbox}
-              title="No enquiries yet"
-              body="Requests submitted through the website will land here."
+              title="No contact messages yet"
+              body="Messages sent from the Contact page will land here."
             />
           ) : (
             <ul className="divide-y divide-line/70">

@@ -4,6 +4,9 @@ export const LEAD_STATUSES = [
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
   { value: "booked", label: "Booked" },
+  // The one status that finishes a lead: marking it Complete is what moves the
+  // lead off its inbox and onto the Clients screen.
+  { value: "complete", label: "Complete" },
   { value: "closed", label: "Closed" },
   { value: "cancelled", label: "Cancelled" },
   { value: "spam", label: "Spam" },
@@ -15,7 +18,13 @@ export const LEAD_STATUSES = [
  * the availability query and the unique index are built from, so they can never
  * disagree about whether a slot is free.
  */
-export const SLOT_HOLDING_STATUSES = ["new", "contacted", "booked", "closed"];
+export const SLOT_HOLDING_STATUSES = [
+  "new",
+  "contacted",
+  "booked",
+  "complete",
+  "closed",
+];
 
 export const LEAD_STATUS_VALUES = LEAD_STATUSES.map((s) => s.value);
 
@@ -43,49 +52,73 @@ export function todayKey(now = new Date()) {
 
 /** Builds the Mongo query for the admin leads list from a URLSearchParams. */
 export function buildLeadFilter(searchParams) {
-  const filter = {};
-
-  // Slot bookings, plan enquiries and plain enquiries are three different
-  // jobs for the clinic, so each gets its own screen rather than one mixed list.
+  // Collected and combined with $and, because both the bucket and the search
+  // want $or and a plain object would let one silently overwrite the other.
+  const clauses = [];
   const kind = searchParams.get("kind");
-  if (kind === "appointment") {
-    filter.slotDate = { $exists: true };
-  } else if (kind === "plan") {
-    filter.source = "plan-enquiry";
-  } else if (kind === "enquiry") {
-    filter.slotDate = { $exists: false };
-    filter.source = { $ne: "plan-enquiry" };
-  }
 
-  if (kind === "appointment") {
+  // "clients" is the finished pile. It picks its bucket from ?type instead of
+  // ?kind, because it can show one inbox's leads or all of them together.
+  const isClients = kind === "clients";
+  const bucket = isClients ? searchParams.get("type") : kind;
+
+  if (bucket === "appointment") {
+    // Everything the patient asked to be seen for: a reserved slot from the
+    // booking wizard, or a "Request appointment" form on a treatment page.
+    clauses.push({
+      $or: [{ slotDate: { $exists: true } }, { source: "service-enquiry" }],
+    });
+
     const when = searchParams.get("when");
     const today = todayKey();
-    if (when === "today") filter.slotDate = today;
-    else if (when === "past") filter.slotDate = { $lt: today };
-    else if (when !== "all") filter.slotDate = { $gte: today };
+    if (when === "today") clauses.push({ slotDate: today });
+    else if (when === "past") clauses.push({ slotDate: { $lt: today } });
+    else if (when === "upcoming") clauses.push({ slotDate: { $gte: today } });
+    else if (when === "noslot") clauses.push({ slotDate: { $exists: false } });
+    // "all" is the default and adds nothing, so no request is ever hidden.
+  } else if (bucket === "contact") {
+    // A catch-all rather than source === "appointment-form", so a lead with an
+    // unexpected source still shows up somewhere instead of vanishing.
+    clauses.push({
+      slotDate: { $exists: false },
+      source: { $nin: ["plan-enquiry", "service-enquiry"] },
+    });
+  } else if (bucket === "plan") {
+    clauses.push({ source: "plan-enquiry" });
   }
 
-  const status = searchParams.get("status");
-  if (status && LEAD_STATUS_VALUES.includes(status)) {
-    filter.status = status;
+  // Completing a lead is what moves it. Until then it stays on its own inbox
+  // whatever else it has been marked, and afterwards it only appears under
+  // Clients — so every lead is on exactly one screen.
+  if (isClients) {
+    clauses.push({ status: "complete" });
+  } else if (kind) {
+    clauses.push({ status: { $ne: "complete" } });
+
+    const status = searchParams.get("status");
+    if (status && LEAD_STATUS_VALUES.includes(status) && status !== "complete") {
+      clauses.push({ status });
+    }
   }
 
   const search = searchParams.get("q")?.trim();
   if (search) {
     const pattern = new RegExp(escapeRegex(search), "i");
-    filter.$or = [
-      { name: pattern },
-      { phone: pattern },
-      { phoneDigits: pattern },
-      { email: pattern },
-      { treatment: pattern },
-      { doctor: pattern },
-      { plan: pattern },
-      { message: pattern },
-    ];
+    clauses.push({
+      $or: [
+        { name: pattern },
+        { phone: pattern },
+        { phoneDigits: pattern },
+        { email: pattern },
+        { treatment: pattern },
+        { doctor: pattern },
+        { plan: pattern },
+        { message: pattern },
+      ],
+    });
   }
 
-  return filter;
+  return clauses.length ? { $and: clauses } : {};
 }
 
 /**
@@ -94,11 +127,18 @@ export function buildLeadFilter(searchParams) {
  * first is what you want.
  */
 export function buildLeadSort(searchParams) {
-  if (searchParams.get("kind") !== "appointment") return { createdAt: -1 };
-  const backwards = searchParams.get("when") === "past";
-  return backwards
-    ? { slotDate: -1, slotTime: -1 }
-    : { slotDate: 1, slotTime: 1 };
+  const kind = searchParams.get("kind");
+  // Clients read by what was finished last, not by what arrived last.
+  if (kind === "clients") return { updatedAt: -1 };
+  if (kind !== "appointment") return { createdAt: -1 };
+
+  const when = searchParams.get("when");
+  if (when === "past") return { slotDate: -1, slotTime: -1 };
+  if (when === "today" || when === "upcoming") {
+    return { slotDate: 1, slotTime: 1 };
+  }
+  // Mixed list: some rows have no slot at all, so fall back to arrival order.
+  return { createdAt: -1 };
 }
 
 const MAX = {

@@ -19,6 +19,7 @@ import {
   Settings,
   Stethoscope,
   Tag,
+  UserCheck,
   UserRound,
   X,
 } from "lucide-react";
@@ -54,8 +55,9 @@ const SETTINGS_LINKS = Object.entries(SINGLETONS).map(([key, schema]) => ({
 const ALL_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/appointments", label: "Appointments", icon: CalendarCheck },
-  { href: "/admin/leads", label: "Enquiries", icon: Inbox },
+  { href: "/admin/leads", label: "Contact messages", icon: Inbox },
   { href: "/admin/plan-enquiries", label: "Package requests", icon: Tag },
+  { href: "/admin/clients", label: "Clients", icon: UserCheck },
   ...CONTENT_LINKS,
   ...SETTINGS_LINKS,
 ];
@@ -136,9 +138,9 @@ export default function AdminShell({ email, badges = {}, children }) {
           />
           <NavItem
             href="/admin/leads"
-            label="Enquiries"
+            label="Contact messages"
             icon={Inbox}
-            badge={counts.enquiries}
+            badge={counts.contact}
             badgeTitle="Not yet opened"
             active={isActive("/admin/leads")}
             onNavigate={() => setMenuOpen(false)}
@@ -150,6 +152,14 @@ export default function AdminShell({ email, badges = {}, children }) {
             badge={counts.packages}
             badgeTitle="Not yet opened"
             active={isActive("/admin/plan-enquiries")}
+            onNavigate={() => setMenuOpen(false)}
+          />
+          {/* No badge: a completed lead has been dealt with by definition. */}
+          <NavItem
+            href="/admin/clients"
+            label="Clients"
+            icon={UserCheck}
+            active={isActive("/admin/clients")}
             onNavigate={() => setMenuOpen(false)}
           />
         </NavGroup>

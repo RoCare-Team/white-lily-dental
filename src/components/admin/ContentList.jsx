@@ -156,7 +156,7 @@ export default function ContentList({ typeKey, schema, items }) {
               return (
                 <li
                   key={row._id}
-                  className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[#fafbfc]"
+                  className="group relative flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[#fafbfc]"
                 >
                   <span className="w-6 shrink-0 text-[12.5px] tabular-nums text-muted/70">
                     {index + 1}
@@ -177,7 +177,7 @@ export default function ContentList({ typeKey, schema, items }) {
 
                   <Link
                     href={`/admin/content/${typeKey}/${row._id}`}
-                    className="min-w-0 flex-1 py-1"
+                    className="min-w-0 flex-1 py-1 outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-2 focus-visible:ring-brand/40"
                   >
                     <span className="block truncate text-[14px] font-semibold text-navy group-hover:text-brand">
                       {row[schema.titleField] || "Untitled"}
@@ -189,7 +189,7 @@ export default function ContentList({ typeKey, schema, items }) {
                     ) : null}
                   </Link>
 
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="relative z-10 flex shrink-0 items-center gap-1">
                     {canReorder ? (
                       <>
                         <IconButton

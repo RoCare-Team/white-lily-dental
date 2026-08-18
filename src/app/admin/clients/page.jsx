@@ -3,12 +3,18 @@ import PageTitle from "@/components/admin/PageTitle";
 import { loadLeadPage } from "@/lib/loadLeads";
 import { getSettings } from "@/lib/content";
 
-export const metadata = { title: "Contact messages" };
+export const metadata = { title: "Clients" };
 
 // Leads change constantly — never serve this from the cache.
 export const dynamic = "force-dynamic";
 
-export default async function AdminLeadsPage({ searchParams }) {
+/**
+ * Everyone whose enquiry actually turned into treatment. A lead lands here the
+ * moment it is marked Complete, which is also what clears it out of the inbox
+ * it came from — so the inboxes stay a list of what is still open, and this is
+ * the record of what came of them.
+ */
+export default async function AdminClientsPage({ searchParams }) {
   const params = (await searchParams) ?? {};
   // Used to sign the ready-made WhatsApp reply.
   const settings = await getSettings();
@@ -17,9 +23,9 @@ export default async function AdminLeadsPage({ searchParams }) {
   let error = null;
 
   try {
-    data = await loadLeadPage(params, "contact");
+    data = await loadLeadPage(params, "clients");
   } catch (cause) {
-    console.error("Admin contact messages failed to load:", cause);
+    console.error("Admin clients failed to load:", cause);
     error =
       "Could not reach the database. Check MONGODB_URI and that this server's IP is allowed in Atlas → Network Access.";
   }
@@ -27,8 +33,8 @@ export default async function AdminLeadsPage({ searchParams }) {
   return (
     <>
       <PageTitle
-        title="Contact messages"
-        subtitle="Sent from the Contact page only. Every appointment request — with or without a chosen slot — lives under Appointments."
+        title="Clients"
+        subtitle="Leads you have marked Complete. Setting one back to any other status returns it to the list it came from."
       />
 
       {error ? (
@@ -40,11 +46,16 @@ export default async function AdminLeadsPage({ searchParams }) {
         </p>
       ) : (
         <LeadsBoard
-          kind="contact"
+          kind="clients"
           siteName={settings.name}
-          basePath="/admin/leads"
+          basePath="/admin/clients"
           initialData={data}
-          initialFilters={{ status: params.status ?? "", q: params.q ?? "" }}
+          initialFilters={{
+            status: params.status ?? "",
+            q: params.q ?? "",
+            type: params.type ?? "",
+            when: params.when ?? "all",
+          }}
         />
       )}
     </>

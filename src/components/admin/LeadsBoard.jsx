@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Phone,
   Search,
+  StickyNote,
   Trash2,
   X,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const STATUS_STYLES = {
   new: "bg-brand-100 text-brand-dark",
   contacted: "bg-amber-100 text-amber-800",
   booked: "bg-teal-50 text-teal",
+  complete: "bg-teal text-white",
   closed: "bg-slate-100 text-muted",
   cancelled: "bg-coral-50 text-coral-dark",
   spam: "bg-coral-50 text-coral-dark",
@@ -117,6 +119,7 @@ function digitsOnly(phone) {
 const QUICK_STATUSES = [
   { value: "contacted", label: "Contacted" },
   { value: "booked", label: "Booked" },
+  { value: "complete", label: "Complete" },
   { value: "closed", label: "Closed" },
   { value: "spam", label: "Spam" },
 ];
@@ -132,22 +135,43 @@ async function copyLead(lead) {
   }
 }
 
+/**
+ * The appointments screen holds two kinds of request: slots reserved through
+ * the booking wizard, and "Request appointment" forms from a treatment page
+ * that have no time yet. "All" is the default so neither is ever hidden.
+ */
+/** "Complete" is never on an inbox — completing a lead is what moves it away. */
+const INBOX_STATUSES = LEAD_STATUSES.filter((s) => s.value !== "complete");
+
+/** Which inbox a client's lead originally came from. */
+const TYPE_FILTERS = [
+  { value: "", label: "Everything" },
+  { value: "appointment", label: "Appointments" },
+  { value: "contact", label: "Contact" },
+  { value: "plan", label: "Packages" },
+];
+
 const WHEN_FILTERS = [
-  { value: "upcoming", label: "Upcoming" },
+  { value: "all", label: "All" },
   { value: "today", label: "Today" },
+  { value: "upcoming", label: "Upcoming" },
   { value: "past", label: "Past" },
-  { value: "all", label: "All dates" },
+  { value: "noslot", label: "Awaiting slot" },
 ];
 
 export default function LeadsBoard({
   initialData,
   initialFilters,
-  kind = "enquiry",
+  kind = "contact",
   basePath = "/admin/leads",
   siteName = "White Lily Dental",
 }) {
-  const isAppointments = kind === "appointment";
-  const isPlans = kind === "plan";
+  // Clients takes its bucket from ?type, so the same board can show one
+  // inbox's finished leads or all of them at once.
+  const isClients = kind === "clients";
+  const type = isClients ? initialFilters.type || "" : kind;
+  const isAppointments = type === "appointment";
+  const isPlans = type === "plan";
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -155,6 +179,10 @@ export default function LeadsBoard({
   const [search, setSearch] = useState(initialFilters.q);
   const [active, setActive] = useState(null);
   const [pending, setPending] = useState("");
+  // Says where a lead just went, because a status change makes it leave the list.
+  const [notice, setNotice] = useState("");
+  // The lead whose remark is being written in the small dialog, if any.
+  const [remarkFor, setRemarkFor] = useState(null);
   const firstRender = useRef(true);
 
   // The server sends fresh rows on every navigation — adopt them during
@@ -205,10 +233,11 @@ export default function LeadsBoard({
      staff can still see which ones arrived since last time. */
   const seenSignature = leads.filter((l) => !l.seenAt).length;
   useEffect(() => {
-    if (!seenSignature) return;
+    // Clients holds leads that have already been dealt with — no badge to clear.
+    if (isClients || !seenSignature) return;
 
     const badgeKey =
-      kind === "appointment" ? "appointments" : kind === "plan" ? "packages" : "enquiries";
+      kind === "appointment" ? "appointments" : kind === "plan" ? "packages" : "contact";
 
     document.dispatchEvent(new CustomEvent("wl:leads-seen", { detail: badgeKey }));
 
@@ -219,7 +248,7 @@ export default function LeadsBoard({
     }).catch(() => {
       /* A failed read-receipt is not worth interrupting anyone for. */
     });
-  }, [seenSignature, kind]);
+  }, [seenSignature, kind, isClients]);
 
   const patchLead = async (id, changes) => {
     setPending(id);
@@ -233,18 +262,47 @@ export default function LeadsBoard({
 
       if (!response.ok) {
         alert(data.error ?? "Could not update this enquiry.");
-        return;
+        return false;
       }
 
-      setLeads((rows) => rows.map((row) => (row.id === id ? data.lead : row)));
-      setActive((current) => (current?.id === id ? data.lead : current));
+      // Completing a lead sends it to Clients, and un-completing it sends it
+      // back. Drop it from this list straight away rather than leaving behind a
+      // row that now belongs on the other screen.
+      const movesOut = changes.status
+        ? isClients
+          ? changes.status !== "complete"
+          : changes.status === "complete"
+        : false;
+
+      if (movesOut) {
+        setLeads((rows) => rows.filter((row) => row.id !== id));
+        setActive((current) => (current?.id === id ? null : current));
+        setNotice(
+          `${data.lead.name || "Lead"} moved to ${
+            changes.status === "complete" ? "Clients" : "its inbox"
+          }.`
+        );
+        setTimeout(() => setNotice(""), 5000);
+      } else {
+        setLeads((rows) => rows.map((row) => (row.id === id ? data.lead : row)));
+        setActive((current) => (current?.id === id ? data.lead : current));
+      }
       // Refresh so the status counts above the table stay accurate.
       router.refresh();
+      return true;
     } catch {
       alert("Network error. Please try again.");
+      return false;
     } finally {
       setPending("");
     }
+  };
+
+  /* Keeps the dialog open when the save fails, so nothing typed is lost. */
+  const saveRemark = async (notes) => {
+    if (!remarkFor) return;
+    const saved = await patchLead(remarkFor.id, { notes });
+    if (saved) setRemarkFor(null);
   };
 
   const removeLead = async (id) => {
@@ -275,30 +333,46 @@ export default function LeadsBoard({
         status,
         q: initialFilters.q,
         when: isAppointments ? initialFilters.when : "",
+        type: isClients ? type : "",
       }).filter(([, v]) => v)
     )
   )}`;
 
   return (
     <>
-      {/* Status filter chips */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <FilterChip
-          label="All"
-          count={totals.all}
-          active={!status}
-          onClick={() => pushQuery({ status: "" })}
-        />
-        {LEAD_STATUSES.map((option) => (
+      {/* Clients is filtered by where the lead came from — every row on it is
+          Complete, so a status filter would have nothing to narrow. The inboxes
+          are the other way round. */}
+      {isClients ? (
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {TYPE_FILTERS.map((option) => (
+            <FilterChip
+              key={option.value || "all"}
+              label={option.label}
+              active={type === option.value}
+              onClick={() => pushQuery({ type: option.value, when: "" })}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-wrap items-center gap-2">
           <FilterChip
-            key={option.value}
-            label={option.label}
-            count={totals[option.value] ?? 0}
-            active={status === option.value}
-            onClick={() => pushQuery({ status: option.value })}
+            label="All"
+            count={totals.all}
+            active={!status}
+            onClick={() => pushQuery({ status: "" })}
           />
-        ))}
-      </div>
+          {INBOX_STATUSES.map((option) => (
+            <FilterChip
+              key={option.value}
+              label={option.label}
+              count={totals[option.value] ?? 0}
+              active={status === option.value}
+              onClick={() => pushQuery({ status: option.value })}
+            />
+          ))}
+        </div>
+      )}
 
       {isAppointments ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -332,7 +406,7 @@ export default function LeadsBoard({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search name, phone, email or treatment"
-            aria-label="Search enquiries"
+            aria-label="Search requests"
             className="h-11 w-full rounded-[10px] border border-line bg-white pl-10 pr-3.5 text-[14.5px] text-navy outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15"
           />
         </div>
@@ -346,26 +420,39 @@ export default function LeadsBoard({
         </a>
       </div>
 
+      {notice ? (
+        <p
+          role="status"
+          className="mt-4 rounded-[10px] border border-teal/30 bg-teal-50 px-4 py-2.5 text-[13.5px] font-medium text-navy"
+        >
+          {notice}
+        </p>
+      ) : null}
+
       {/* Table */}
       <div className="mt-5 overflow-hidden rounded-[14px] border border-line bg-white">
         {leads.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Inbox className="h-8 w-8 text-muted/60" aria-hidden="true" />
             <p className="text-[15px] font-semibold text-navy">
-              {isAppointments
-                ? "No appointments found"
-                : isPlans
-                  ? "No plan enquiries found"
-                  : "No enquiries found"}
+              {isClients
+                ? "No clients yet"
+                : isAppointments
+                  ? "No appointment requests found"
+                  : isPlans
+                    ? "No package requests found"
+                    : "No messages found"}
             </p>
             <p className="max-w-[380px] text-[13.5px] leading-relaxed text-muted">
               {status || initialFilters.q
                 ? "Try clearing the filters or the search box."
-                : isAppointments
-                  ? "Slots booked through the website will appear here."
-                  : isPlans
-                    ? "Patients who enquire about a dental plan will appear here."
-                    : "New enquiries from the website will appear here."}
+                : isClients
+                  ? "Mark a lead as Complete and it moves here."
+                  : isAppointments
+                    ? "Appointment requests from the website stay here until you mark them Complete."
+                    : isPlans
+                      ? "Dental plan enquiries stay here until you mark them Complete."
+                      : "Contact page messages stay here until you mark them Complete."}
             </p>
           </div>
         ) : (
@@ -425,6 +512,13 @@ export default function LeadsBoard({
                         : formatDate(lead.createdAt)}
                       {lead.clinic ? ` · ${lead.clinic}` : ""}
                     </span>
+
+                    {lead.notes ? (
+                      <span className="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[12px] font-medium text-amber-800">
+                        <StickyNote className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{lead.notes}</span>
+                      </span>
+                    ) : null}
                   </span>
 
                   <span className="flex shrink-0 gap-1">
@@ -448,16 +542,17 @@ export default function LeadsBoard({
           </ul>
 
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[820px] border-collapse text-left">
+            <table className="w-full min-w-[960px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-line bg-[#fafbfc] text-[12px] font-semibold uppercase tracking-wide text-muted">
                   <th className="px-4 py-3">
-                    {isAppointments ? "Appointment" : "Received"}
+                    {isClients ? "When" : isAppointments ? "Appointment" : "Received"}
                   </th>
                   <th className="px-4 py-3">Patient</th>
                   <th className="px-4 py-3">{isPlans ? "Plan" : "Treatment"}</th>
                   <th className="px-4 py-3">Clinic</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Remark</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -471,7 +566,16 @@ export default function LeadsBoard({
                     }`}
                   >
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      {isAppointments ? (
+                      {!lead.slotDate && isAppointments ? (
+                        <>
+                          <span className="block font-semibold text-navy">
+                            No slot chosen
+                          </span>
+                          <span className="block text-[13px] text-muted">
+                            {formatDate(lead.createdAt)}
+                          </span>
+                        </>
+                      ) : lead.slotDate ? (
                         <>
                           <span className="block font-semibold text-navy">
                             {formatDay(lead.slotDate)}
@@ -521,7 +625,7 @@ export default function LeadsBoard({
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="block text-muted">{lead.clinic || "—"}</span>
-                      {lead.slotDate && !isAppointments ? (
+                      {lead.slotDate && !isAppointments && !isClients ? (
                         <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[12px] font-semibold text-teal">
                           {formatDay(lead.slotDate)} · {formatSlotTime(lead.slotTime)}
                         </span>
@@ -546,6 +650,28 @@ export default function LeadsBoard({
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {/* Opens the small remark dialog rather than the full
+                          drawer — writing one line should not be a detour. */}
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setRemarkFor(lead);
+                        }}
+                        title={lead.notes || "Add a remark"}
+                        className={`inline-flex max-w-[220px] items-center gap-1.5 rounded-full px-2.5 py-1 text-left text-[12.5px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand/30 ${
+                          lead.notes
+                            ? "bg-amber-100 font-medium text-amber-800 hover:bg-amber-200"
+                            : "border border-dashed border-line font-semibold text-muted hover:border-brand hover:text-brand"
+                        }`}
+                      >
+                        <StickyNote className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span className="truncate">
+                          {lead.notes || "Add remark"}
+                        </span>
+                      </button>
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center justify-end gap-1.5">
@@ -614,6 +740,15 @@ export default function LeadsBoard({
         </div>
       ) : null}
 
+      {remarkFor ? (
+        <RemarkDialog
+          lead={remarkFor}
+          busy={pending === remarkFor?.id}
+          onClose={() => setRemarkFor(null)}
+          onSave={saveRemark}
+        />
+      ) : null}
+
       {active ? (
         <LeadDrawer
           lead={active}
@@ -638,6 +773,97 @@ export default function LeadsBoard({
   );
 }
 
+/**
+ * A one-field dialog for the remark, opened straight from the list. Deliberately
+ * separate from the lead drawer: adding a line after a phone call is the most
+ * common thing staff do, and it should not mean opening the whole record.
+ */
+function RemarkDialog({ lead, busy, onClose, onSave }) {
+  const [text, setText] = useState(lead.notes ?? "");
+
+  // Opening a different lead swaps the text, during render, so the previous
+  // lead's remark is never shown against the new one.
+  const [lastId, setLastId] = useState(lead.id);
+  if (lastId !== lead.id) {
+    setLastId(lead.id);
+    setText(lead.notes ?? "");
+  }
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Remark for ${lead.name || "lead"}`}
+      className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+    >
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-navy/50 backdrop-blur-[2px]"
+      />
+
+      <div className="relative w-full max-w-[520px] rounded-[16px] border border-line bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[16px] font-bold tracking-tight text-navy">Remark</h2>
+            <p className="mt-0.5 truncate text-[13px] text-muted">
+              {lead.name || "Lead"}
+              {lead.phone ? ` · ${lead.phone}` : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-[#f0f4f9] hover:text-navy"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Close</span>
+          </button>
+        </div>
+
+        <textarea
+          autoFocus
+          rows={4}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          placeholder="Call outcome, follow-up date, quoted price…"
+          className="mt-4 w-full rounded-[10px] border border-line bg-white px-3.5 py-2.5 text-[14px] leading-relaxed text-navy outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15"
+        />
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-10 items-center justify-center rounded-[10px] border border-line px-4 text-[14px] font-semibold text-muted transition-colors hover:border-brand hover:text-brand"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={busy || text === (lead.notes ?? "")}
+            onClick={() => onSave(text)}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-deep px-5 text-[14px] font-semibold text-white transition-colors hover:bg-deep-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : null}
+            Save remark
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FilterChip({ label, count, active, onClick }) {
   return (
     <button
@@ -651,7 +877,9 @@ function FilterChip({ label, count, active, onClick }) {
       }`}
     >
       {label}
-      <span className={active ? "text-white/70" : "text-muted"}>{count}</span>
+      {typeof count === "number" ? (
+        <span className={active ? "text-white/70" : "text-muted"}>{count}</span>
+      ) : null}
     </button>
   );
 }
@@ -855,7 +1083,7 @@ function LeadDrawer({
               htmlFor="lead-notes"
               className="text-[13px] font-semibold text-muted"
             >
-              Internal notes
+              Remark
             </label>
             <textarea
               id="lead-notes"
@@ -874,7 +1102,7 @@ function LeadDrawer({
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : null}
-              Save notes
+              Save remark
             </button>
           </div>
 

@@ -14,12 +14,21 @@ export const dynamic = "force-dynamic";
 function bucketFilter(kind) {
   switch (kind) {
     case "appointment":
-      // The screen opens on "Upcoming", so that is what its badge counts.
-      return { slotDate: { $gte: todayKey() } };
+      // Booked slots still to come, plus treatment-page requests with no time
+      // chosen yet — the screen opens on "All", so both are on it.
+      return {
+        $or: [
+          { slotDate: { $gte: todayKey() } },
+          { slotDate: { $exists: false }, source: "service-enquiry" },
+        ],
+      };
     case "plan":
       return { source: "plan-enquiry" };
-    case "enquiry":
-      return { slotDate: { $exists: false }, source: { $ne: "plan-enquiry" } };
+    case "contact":
+      return {
+        slotDate: { $exists: false },
+        source: { $nin: ["plan-enquiry", "service-enquiry"] },
+      };
     default:
       return null;
   }
@@ -49,7 +58,7 @@ export async function POST(request) {
   try {
     const leads = await getLeads();
     const { modifiedCount } = await leads.updateMany(
-      { ...filter, seenAt: { $exists: false } },
+      { ...filter, status: { $ne: "complete" }, seenAt: { $exists: false } },
       { $set: { seenAt: new Date() } }
     );
 

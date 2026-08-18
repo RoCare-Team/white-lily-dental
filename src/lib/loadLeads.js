@@ -9,8 +9,8 @@ import {
 /**
  * One page of leads plus the counts the filter chips need.
  *
- * Shared by the enquiries and appointments screens — they differ only by the
- * `kind` they ask for.
+ * Shared by the contact, appointments and package screens — they differ only
+ * by the `kind` they ask for.
  */
 export async function loadLeadPage(searchParams, kind) {
   const params = new URLSearchParams();
@@ -18,6 +18,7 @@ export async function loadLeadPage(searchParams, kind) {
   if (searchParams.status) params.set("status", searchParams.status);
   if (searchParams.q) params.set("q", searchParams.q);
   if (searchParams.when) params.set("when", searchParams.when);
+  if (searchParams.type) params.set("type", searchParams.type);
 
   const page = Math.max(1, Number(searchParams.page) || 1);
   const filter = buildLeadFilter(params);

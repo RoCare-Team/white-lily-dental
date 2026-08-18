@@ -24,7 +24,11 @@ const label = "block text-[13px] font-semibold text-navy";
 
 /** Renders one schema field. Recurses for groups and repeaters. */
 export default function FieldRenderer({ field, value, onChange, id }) {
-  const fieldId = id ?? field.name;
+  // Prefixed, never the bare field name. An element's id inside a <form>
+  // becomes a property of that form, so a field called "focus" would replace
+  // form.focus() with an <input> and crash React the moment it tried to move
+  // focus. Names like "action", "method" and "reset" are the same trap.
+  const fieldId = id ?? `field-${field.name}`;
 
   if (field.type === "group") {
     return (
