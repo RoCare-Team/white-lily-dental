@@ -221,6 +221,7 @@ export function serializeLead(doc) {
     id: String(doc._id),
     name: doc.name ?? "",
     phone: doc.phone ?? "",
+    phoneDigits: doc.phoneDigits ?? "",
     email: doc.email ?? "",
     clinic: doc.clinic ?? "",
     clinicId: doc.clinicId ?? "",

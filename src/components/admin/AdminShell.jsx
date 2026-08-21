@@ -21,6 +21,7 @@ import {
   Tag,
   UserCheck,
   UserRound,
+  Users,
   X,
 } from "lucide-react";
 
@@ -54,10 +55,14 @@ const SETTINGS_LINKS = Object.entries(SINGLETONS).map(([key, schema]) => ({
 
 const ALL_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/appointments", label: "Appointments", icon: CalendarCheck },
+  { href: "/admin/appointments", label: "Calendar", icon: CalendarCheck },
   { href: "/admin/leads", label: "Contact messages", icon: Inbox },
   { href: "/admin/plan-enquiries", label: "Package requests", icon: Tag },
   { href: "/admin/clients", label: "Clients", icon: UserCheck },
+  { href: "/admin/patients", label: "Patients", icon: Users },
+  // Kept so the top bar can still name a content or singleton screen, even
+  // though the sidebar now reaches them through Settings.
+  { href: "/admin/settings", label: "Settings", icon: Settings },
   ...CONTENT_LINKS,
   ...SETTINGS_LINKS,
 ];
@@ -129,7 +134,7 @@ export default function AdminShell({ email, badges = {}, children }) {
           />
           <NavItem
             href="/admin/appointments"
-            label="Appointments"
+            label="Calendar"
             icon={CalendarCheck}
             badge={counts.appointments}
             badgeTitle="Not yet opened"
@@ -162,28 +167,28 @@ export default function AdminShell({ email, badges = {}, children }) {
             active={isActive("/admin/clients")}
             onNavigate={() => setMenuOpen(false)}
           />
+          <NavItem
+            href="/admin/patients"
+            label="Patients"
+            icon={Users}
+            active={isActive("/admin/patients")}
+            onNavigate={() => setMenuOpen(false)}
+          />
         </NavGroup>
 
-        <NavGroup title="Website content">
-          {CONTENT_LINKS.map((link) => (
-            <NavItem
-              key={link.href}
-              {...link}
-              active={isActive(link.href)}
-              onNavigate={() => setMenuOpen(false)}
-            />
-          ))}
-        </NavGroup>
-
-        <NavGroup title="Configuration">
-          {SETTINGS_LINKS.map((link) => (
-            <NavItem
-              key={link.href}
-              {...link}
-              active={isActive(link.href)}
-              onNavigate={() => setMenuOpen(false)}
-            />
-          ))}
+        <NavGroup title="Website">
+          {/* One door to all ten content types. Listing them here meant
+              scrolling past the whole website to reach anything below. */}
+          <NavItem
+            href="/admin/settings"
+            label="Settings"
+            icon={Settings}
+            active={
+              pathname.startsWith("/admin/content") ||
+              pathname.startsWith("/admin/settings")
+            }
+            onNavigate={() => setMenuOpen(false)}
+          />
         </NavGroup>
       </nav>
 
@@ -271,7 +276,16 @@ export default function AdminShell({ email, badges = {}, children }) {
           </a>
         </header>
 
-        <main className="mx-auto max-w-[1180px] px-4 py-7 sm:px-6 lg:px-8">
+        {/* The calendar needs every column it can get; the other screens read
+            better held to a comfortable measure. */}
+        <main
+          className={`mx-auto px-4 py-7 sm:px-6 lg:px-8 ${
+            pathname.startsWith("/admin/appointments") ||
+            pathname.startsWith("/admin/patients")
+              ? "max-w-[1600px]"
+              : "max-w-[1180px]"
+          }`}
+        >
           {children}
         </main>
       </div>
