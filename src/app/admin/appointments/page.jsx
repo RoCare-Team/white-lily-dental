@@ -36,14 +36,15 @@ export default async function AdminAppointmentsPage({ searchParams }) {
 
   return (
     <>
-      <PageTitle
-        title="Calendar"
-        subtitle={
-          isList
-            ? "Every appointment request: slots reserved through the booking wizard, and treatment-page requests still waiting for a time."
-            : "The clinic diary. Only appointments still holding their slot are shown — a cancelled one has given its time back."
-        }
-      />
+{/* The top bar already names this screen. A calendar needs its height far
+          more than it needs a heading repeating that word, so only the list —
+          where the subtitle explains a real rule — keeps one. */}
+      {isList ? (
+        <PageTitle
+          title="Appointment requests"
+          subtitle="Slots reserved through the booking wizard, and treatment-page requests still waiting for a time."
+        />
+      ) : null}
 
       {error ? (
         <p

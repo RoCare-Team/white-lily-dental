@@ -6,7 +6,7 @@
  * needed the same detail panel, formatting and status colours.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import Link from "next/link";
 import {
   CalendarX,
@@ -87,6 +87,17 @@ export function replyText(lead, siteName) {
       : `Thank you for your enquiry about ${about}.`,
     "How can we help you further?",
   ].join(" ");
+}
+
+/** "Dr. Meenakshi Singh" → "MS". The "Dr." is not part of anyone's initials. */
+export function initialsOf(name) {
+  const words = String(name ?? "")
+    .replace(/^dr\.?\s+/i, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length) return "—";
+  return (words[0][0] + (words[1]?.[0] ?? "")).toUpperCase();
 }
 
 /**
@@ -175,8 +186,68 @@ export function IconLink({ href, title, icon: Icon, external }) {
   );
 }
 
+/** The anchored panel's geometry. */
+const POPOVER_MARGIN = 16;
+const POPOVER_GAP = 8;
+const POPOVER_WIDTH = 344;
+
+/**
+ * How short the panel may get before it is lifted instead. Below this it stops
+ * being readable, so the panel moves up; above it, the panel shortens and
+ * scrolls inside — which keeps it level with what was clicked.
+ */
+const POPOVER_MIN_HEIGHT = 300;
+
+/**
+ * Where to put the panel when it was opened from a particular element.
+ *
+ * The rule is "stay beside what was clicked". On a wide screen that means to
+ * the right of it, flipped to the left when the window edge is close. On a
+ * narrow one there is no beside, so it sits directly under the element instead
+ * — still at the thing you tapped, never adrift in the middle of the screen.
+ *
+ * Worked out during render from the live rect, so it follows the element while
+ * the calendar scrolls.
+ */
+function popoverPosition(anchorEl) {
+  if (!anchorEl || typeof window === "undefined") return null;
+
+  const rect = anchorEl.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const narrow = vw < 720;
+
+  const width = narrow
+    ? Math.min(420, vw - POPOVER_MARGIN * 2)
+    : POPOVER_WIDTH;
+
+  let left;
+  if (narrow) {
+    left = rect.left + rect.width / 2 - width / 2;
+  } else {
+    left = rect.right + POPOVER_GAP;
+    if (left + width > vw - POPOVER_MARGIN) {
+      left = rect.left - width - POPOVER_GAP;
+    }
+  }
+  left = Math.min(Math.max(POPOVER_MARGIN, left), vw - POPOVER_MARGIN - width);
+
+  // Level with the element (or just below it on a narrow screen), lifted only
+  // as far as it must be to keep a usable height on screen.
+  const lowest = Math.max(POPOVER_MARGIN, vh - POPOVER_MARGIN - POPOVER_MIN_HEIGHT);
+  let top = narrow ? rect.bottom + POPOVER_GAP : rect.top - 8;
+  top = Math.max(POPOVER_MARGIN, Math.min(top, lowest));
+
+  // Whatever is left below that point — so the panel always stops short of the
+  // window edge and scrolls its own content instead.
+  const maxHeight = vh - top - POPOVER_MARGIN;
+
+  return { top, left, width, maxHeight };
+}
+
 export function LeadDrawer({
   lead,
+  anchorEl,
   siteName,
   busy,
   onClose,
@@ -203,6 +274,20 @@ export function LeadDrawer({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
+  /* Re-render on scroll and resize so an anchored panel keeps up with the
+     element it belongs to. The position itself is worked out during render. */
+  const [, reposition] = useReducer((n) => n + 1, 0);
+  useEffect(() => {
+    if (!anchorEl) return undefined;
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [anchorEl]);
+
+  const at = popoverPosition(anchorEl);
   const rows = leadRows(lead);
 
   return (
@@ -210,7 +295,11 @@ export function LeadDrawer({
       role="dialog"
       aria-modal="true"
       aria-label={`Enquiry from ${lead.name}`}
-      className="fixed inset-0 z-50 flex justify-end"
+      className={
+        at
+          ? "fixed inset-0 z-50"
+          : "fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+      }
     >
       <button
         type="button"
@@ -219,8 +308,16 @@ export function LeadDrawer({
         className="absolute inset-0 bg-navy/40 backdrop-blur-[2px]"
       />
 
-      <div className="relative flex h-full w-full max-w-[440px] flex-col overflow-y-auto bg-white shadow-2xl">
-        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-line bg-white px-5 py-4">
+      <div
+        className={
+          at
+            ? "absolute flex flex-col overflow-hidden rounded-[14px] border border-line bg-white shadow-2xl"
+            : "relative flex max-h-[92dvh] w-full max-w-[560px] flex-col overflow-hidden rounded-t-[18px] bg-white shadow-2xl sm:max-h-[88dvh] sm:rounded-[16px]"
+        }
+        style={at ?? undefined}
+      >
+        {/* Header and footer stay put; only the detail between them scrolls. */}
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="min-w-0">
             {/* The name opens the patient's whole file — every appointment and
                 message from this phone number, not just this one. */}
@@ -253,7 +350,7 @@ export function LeadDrawer({
           </button>
         </div>
 
-        <div className="flex-1 px-5 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5" style={{ scrollbarWidth: "thin" }}>
           <div className="flex gap-2">
             <a
               href={`tel:${lead.phone}`}

@@ -2,6 +2,7 @@ import { getClinics, getDoctors } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
 import { SLOT_HOLDING_STATUSES, serializeLead, todayKey } from "@/lib/leads";
 import { buildRange, gridHours } from "@/lib/calendar";
+import { buildDoctorColours } from "@/lib/doctorColours";
 
 /** Marks leads with no doctor recorded, so they stay reachable in the filter. */
 export const UNASSIGNED = "__none__";
@@ -118,6 +119,9 @@ export async function loadCalendar(params = {}) {
 
     doctorName,
     doctors: doctorRows,
+    // Built here rather than in the browser: the admin order is the thing that
+    // decides the colours, and only the server knows it.
+    doctorColours: buildDoctorColours(doctors),
     doctorTotal: sum(doctorCounts),
 
     byDay,

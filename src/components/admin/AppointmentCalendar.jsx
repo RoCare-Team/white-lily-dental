@@ -2,36 +2,40 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Clock, List } from "lucide-react";
+import {
+  CalendarOff,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  List,
+  X,
+} from "lucide-react";
 
 import {
   formatSlotTime,
   LeadDrawer,
   STATUS_STYLES,
 } from "@/components/admin/leadShared";
+import { colourFor } from "@/lib/doctorColours";
+import AdminToolbar from "@/components/admin/toolbarSlot";
 import { layoutDay, minutesOf, ROW_HEIGHT, ROW_MINUTES } from "@/lib/calendar";
 
 /**
- * Appointment blocks. Each status gets its own fill and a heavier left edge,
- * so a glance down a column reads as a state of play, not just a list of names.
+ * An appointment block wears its doctor's colour: a wash of it behind, the full
+ * strength on the left edge and in the text. Reading a column then answers
+ * "whose day is this?" before you have read a single name. Status is carried by
+ * weight instead — a finished appointment fades back, since it needs nothing.
  */
-const BLOCK_STYLES = {
-  new: "bg-brand-50 border-l-brand text-brand-dark",
-  contacted: "bg-amber-100 border-l-amber-500 text-amber-900",
-  booked: "bg-teal-50 border-l-teal text-teal",
-  complete: "bg-slate-100 border-l-slate-400 text-muted",
-  closed: "bg-slate-100 border-l-slate-400 text-muted",
-};
-
-/**
- * A colour per doctor, taken by position so it stays the same from one visit to
- * the next. Only used for the dot beside a name — the appointment blocks stay
- * coloured by status, which is what the receptionist is actually acting on.
- */
-const DOCTOR_DOTS = ["#1668c7", "#0f8478", "#9a5c07", "#7b4fd0", "#c2544f"];
-
-/** Matches the sentinel loadCalendar uses for appointments with no doctor. */
-const UNASSIGNED = "__none__";
+function blockStyle(lead, colours) {
+  const colour = colourFor(colours, lead.doctor);
+  const done = lead.status === "complete" || lead.status === "closed";
+  return {
+    backgroundColor: `${colour}${done ? "0f" : "1f"}`,
+    borderLeftColor: colour,
+    color: colour,
+    opacity: done ? 0.7 : 1,
+  };
+}
 
 const DOT_SEP = " · ";
 
@@ -41,13 +45,17 @@ const SPAN_OPTIONS = [
   { value: "month", label: "Month" },
 ];
 
-/** "14:00" worth of minutes → "2 PM"; half hours stay blank in the gutter. */
-function hourLabel(minutes) {
+/** 810 → "1:30 PM". Every row is labelled, so no block has to be counted to. */
+function rowLabel(minutes) {
   const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
   const period = h < 12 ? "AM" : "PM";
   const hour = h % 12 === 0 ? 12 : h % 12;
-  return `${hour} ${period}`;
+  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
 }
+
+/** The tint down today's column — warm, so it reads as "now" beside the blues. */
+const TODAY_TINT = "#fff6f0";
 
 export default function AppointmentCalendar({
   data,
@@ -58,7 +66,20 @@ export default function AppointmentCalendar({
   const searchParams = useSearchParams();
 
   const [active, setActive] = useState(null);
+  // The element the panel should open beside — Practo's behaviour, and the
+  // reason a block click does not throw you to the middle of the screen.
+  const [anchorEl, setAnchorEl] = useState(null);
   const [pending, setPending] = useState("");
+
+  const openLead = (lead, event) => {
+    setAnchorEl(event?.currentTarget ?? null);
+    setActive(lead);
+  };
+
+  const closeLead = () => {
+    setActive(null);
+    setAnchorEl(null);
+  };
 
   // The red "now" line. Seeded from the server so the first paint matches, then
   // kept honest by a timer — a receptionist has this screen open all day.
@@ -83,6 +104,7 @@ export default function AppointmentCalendar({
     doctors,
     doctorName,
     doctorTotal,
+    doctorColours,
     today,
   } = data;
 
@@ -140,11 +162,14 @@ export default function AppointmentCalendar({
   };
 
   const isMonth = range.view === "month";
+  const visible = Object.values(byDay).reduce((total, list) => total + list.length, 0);
+  const filtered = Boolean(doctorName || clinicId);
 
   return (
     <>
-      {/* ------------------------------------------------------- toolbar */}
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      {/* The controls live in the top bar, beside the screen's name, so the
+          diary starts at the top of the page instead of below a second bar. */}
+      <AdminToolbar>
         <div className="flex items-center gap-1">
           <ArrowButton
             title="Previous"
@@ -158,8 +183,11 @@ export default function AppointmentCalendar({
           />
         </div>
 
-        <p className="min-w-0 flex-1 truncate text-[15.5px] font-bold tracking-tight text-navy">
+        <p className="mr-1 whitespace-nowrap text-[15px] font-bold tracking-tight text-navy">
           {range.label}
+          <span className="ml-2 text-[12.5px] font-medium text-muted">
+            {visible} {visible === 1 ? "appointment" : "appointments"}
+          </span>
         </p>
 
         <button
@@ -196,55 +224,70 @@ export default function AppointmentCalendar({
           <List className="h-4 w-4" aria-hidden="true" />
           List view
         </button>
-      </div>
+      </AdminToolbar>
 
-{/* Filters as chip rows, not a left rail — every pixel a column would have
-          taken is a pixel the seven day columns need. */}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <FilterChip
-          label="All doctors"
-          count={doctorTotal}
-          active={!doctorName}
-          onClick={() => pushQuery({ doctor: "" })}
-        />
-        {doctors.map((doctor, index) => (
-          <FilterChip
-            key={doctor.name}
-            label={doctor.label ?? doctor.name}
-            title={doctor.specialty || undefined}
-            count={doctor.count}
-            dot={doctor.name === UNASSIGNED ? "#8fa2b5" : DOCTOR_DOTS[index % DOCTOR_DOTS.length]}
-            active={doctorName === doctor.name}
-            onClick={() => pushQuery({ doctor: doctor.name })}
+{/* ------------------------------------------------------- body */}
+      <div className="overflow-hidden border-b border-line bg-white xl:grid xl:grid-cols-[214px_minmax(0,1fr)_236px]">
+
+        {/* who and where — divided from the diary by a rule, not a gap */}
+        <aside className="border-b border-line p-2.5 xl:border-b-0 xl:border-r">
+          <p className="px-2 pb-1.5 pt-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-muted">
+            Doctors
+          </p>
+          <FilterRow
+            label="All doctors"
+            count={doctorTotal}
+            active={!doctorName}
+            onClick={() => pushQuery({ doctor: "" })}
           />
-        ))}
-      </div>
+          {doctors.map((doctor) => (
+            <FilterRow
+              key={doctor.name}
+              label={doctor.label ?? doctor.name}
+              title={doctor.specialty || undefined}
+              count={doctor.count}
+              dot={colourFor(doctorColours, doctor.name)}
+              active={doctorName === doctor.name}
+              onClick={() => pushQuery({ doctor: doctor.name })}
+            />
+          ))}
 
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <FilterChip
-          label="All clinics"
-          count={clinicTotal}
-          active={!clinicId}
-          onClick={() => pushQuery({ clinic: "" })}
-        />
-        {clinics.map((clinic) => (
-          <FilterChip
-            key={clinic.id}
-            label={clinic.name}
-            count={clinic.count}
-            active={clinicId === clinic.id}
-            onClick={() => pushQuery({ clinic: clinic.id })}
+          <p className="mt-3 border-t border-line px-2 pb-1.5 pt-3 text-[10.5px] font-bold uppercase tracking-[0.08em] text-muted">
+            Clinics
+          </p>
+          <FilterRow
+            label="All clinics"
+            count={clinicTotal}
+            active={!clinicId}
+            onClick={() => pushQuery({ clinic: "" })}
           />
-        ))}
-      </div>
+          {clinics.map((clinic) => (
+            <FilterRow
+              key={clinic.id}
+              label={clinic.name}
+              count={clinic.count}
+              active={clinicId === clinic.id}
+              onClick={() => pushQuery({ clinic: clinic.id })}
+            />
+          ))}
 
-      {/* ------------------------------------------------------- body */}
-      <div className="mt-4 grid gap-4 2xl:grid-cols-[minmax(0,1fr)_286px]">
+          {/* An empty grid is confusing until you remember a filter is on. */}
+          {filtered ? (
+            <button
+              type="button"
+              onClick={() => pushQuery({ doctor: "", clinic: "" })}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[8px] border border-line px-2 py-2 text-[12.5px] font-semibold text-muted transition-colors hover:border-brand hover:text-brand"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+              Clear filters
+            </button>
+          ) : null}
+        </aside>
 
         {/* the calendar itself */}
-        <div className="min-w-0">
+        <div className="flex min-w-0 flex-col border-b border-line xl:border-b-0">
           {awaiting.length ? (
-            <div className="mb-3 rounded-[13px] border border-dashed border-line bg-white p-3">
+            <div className="border-b border-line px-3 py-2.5">
               <p className="text-[10.5px] font-bold uppercase tracking-[0.08em] text-muted">
                 Awaiting a time · {awaiting.length}
               </p>
@@ -253,7 +296,7 @@ export default function AppointmentCalendar({
                   <button
                     key={lead.id}
                     type="button"
-                    onClick={() => setActive(lead)}
+                    onClick={(event) => openLead(lead, event)}
                     className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-[#fafbfc] px-3 py-1.5 text-[12.5px] text-navy transition-colors hover:border-brand hover:text-brand"
                   >
                     <Clock className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
@@ -269,8 +312,11 @@ export default function AppointmentCalendar({
             <MonthGrid
               range={range}
               byDay={byDay}
+              colours={doctorColours}
+              empty={visible === 0}
+              filtered={filtered}
               today={today}
-              onOpen={setActive}
+              onOpen={openLead}
               onDay={(key) => pushQuery({ span: "day", date: key })}
             />
           ) : (
@@ -278,33 +324,40 @@ export default function AppointmentCalendar({
               range={range}
               hours={hours}
               byDay={byDay}
+              colours={doctorColours}
+              empty={visible === 0}
+              filtered={filtered}
               today={today}
               now={now}
               scroller={scroller}
-              onOpen={setActive}
+              onOpen={openLead}
             />
           )}
         </div>
 
         {/* today at a glance */}
-        <aside className="rounded-[13px] border border-line bg-white">
+        <aside className="xl:border-l xl:border-line">
           <div className="border-b border-line px-4 py-3">
             <p className="text-[14px] font-bold tracking-tight text-navy">
               Today&rsquo;s schedule
             </p>
           </div>
 
-          <div className="grid grid-cols-3 divide-x divide-line border-b border-line text-center">
-            <Tally label="Today" value={todaySchedule.length} tone="text-navy" />
+          <div className="grid grid-cols-3 gap-2 border-b border-line p-3">
+            <Tally
+              label="Today"
+              value={todaySchedule.length}
+              className="bg-navy text-white"
+            />
             <Tally
               label="New"
               value={todaySchedule.filter((l) => l.status === "new").length}
-              tone="text-brand"
+              className="bg-brand-100 text-brand-dark"
             />
             <Tally
               label="Done"
               value={todaySchedule.filter((l) => l.status === "complete").length}
-              tone="text-teal"
+              className="bg-teal-50 text-teal"
             />
           </div>
 
@@ -318,11 +371,18 @@ export default function AppointmentCalendar({
                 <li key={lead.id}>
                   <button
                     type="button"
-                    onClick={() => setActive(lead)}
+                    onClick={(event) => openLead(lead, event)}
                     className="flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-brand-50/50"
                   >
-                    <span className="w-[52px] shrink-0 pt-0.5 text-[12px] font-semibold tabular-nums text-muted">
-                      {formatSlotTime(lead.slotTime)}
+                    <span className="flex w-[50px] shrink-0 items-center gap-1.5 pt-0.5">
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: colourFor(doctorColours, lead.doctor) }}
+                      />
+                      <span className="text-[12px] font-semibold tabular-nums text-muted">
+                        {formatSlotTime(lead.slotTime)}
+                      </span>
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-semibold text-navy">
@@ -355,9 +415,10 @@ export default function AppointmentCalendar({
       {active ? (
         <LeadDrawer
           lead={active}
+          anchorEl={anchorEl}
           siteName={siteName}
           busy={pending === active.id}
-          onClose={() => setActive(null)}
+          onClose={closeLead}
           onStatus={(status) => patchLead(active.id, { status })}
           onSaveNotes={(notes) => patchLead(active.id, { notes })}
           onCancelBooking={() => {
@@ -378,13 +439,26 @@ export default function AppointmentCalendar({
 
 /* ------------------------------------------------------------------ grid */
 
-function TimeGrid({ range, hours, byDay, today, now, scroller, onOpen }) {
-  const columns = `56px repeat(${range.days.length}, minmax(0, 1fr))`;
+function TimeGrid({
+  range,
+  hours,
+  byDay,
+  colours,
+  empty,
+  filtered,
+  today,
+  now,
+  scroller,
+  onOpen,
+}) {
+  const columns = `68px repeat(${range.days.length}, minmax(0, 1fr))`;
   const bodyHeight = hours.rows.length * ROW_HEIGHT;
   const showNow = now >= hours.start && now <= hours.end;
 
   return (
-    <div className="overflow-hidden rounded-[13px] border border-line bg-white">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      {empty ? <EmptyDiary filtered={filtered} /> : null}
+
       {/* day headings, kept out of the scroller so they stay put */}
       <div
         className="grid border-b border-line bg-[#fafbfc]"
@@ -397,23 +471,27 @@ function TimeGrid({ range, hours, byDay, today, now, scroller, onOpen }) {
             <div
               key={day.key}
               className={`border-l border-line px-2 py-2.5 text-center ${
-                isToday ? "bg-brand-50" : ""
+                isToday ? "bg-navy" : ""
               }`}
             >
               <p
                 className={`text-[10.5px] font-bold uppercase tracking-[0.06em] ${
-                  isToday ? "text-brand" : "text-muted"
+                  isToday ? "text-white/70" : "text-muted"
                 }`}
               >
                 {day.weekday}
               </p>
               <p
                 className={`text-[15px] font-bold tabular-nums ${
-                  isToday ? "text-brand" : "text-navy"
+                  isToday ? "text-white" : "text-navy"
                 }`}
               >
                 {day.dayNumber}
-                <span className="ml-1 text-[11.5px] font-semibold text-muted">
+                <span
+                  className={`ml-1 text-[11.5px] font-semibold ${
+                    isToday ? "text-white/60" : "text-muted"
+                  }`}
+                >
                   {day.month}
                 </span>
               </p>
@@ -422,35 +500,63 @@ function TimeGrid({ range, hours, byDay, today, now, scroller, onOpen }) {
         })}
       </div>
 
-      <div ref={scroller} className="max-h-[62vh] overflow-y-auto overflow-x-auto">
+      <div
+        ref={scroller}
+        className="overflow-y-auto overflow-x-auto"
+        style={{
+          // Fills what is left of the window rather than a guessed fraction of
+          // it, so a laptop shows a full clinic day without scrolling.
+          // The top bar and the day headings are all that sit above it now.
+          maxHeight: "calc(100dvh - 132px)",
+          minHeight: 380,
+          scrollbarWidth: "thin",
+        }}
+      >
         <div
           className="grid min-w-[560px]"
           style={{ gridTemplateColumns: columns }}
         >
           {/* hour gutter */}
-          <div className="relative" style={{ height: bodyHeight }}>
-            {hours.rows.map((row) =>
-              row.isHour ? (
-                <span
-                  key={row.minutes}
-                  className="absolute right-2 -translate-y-1/2 text-[11px] font-medium tabular-nums text-muted"
-                  style={{ top: ((row.minutes - hours.start) / ROW_MINUTES) * ROW_HEIGHT }}
-                >
-                  {hourLabel(row.minutes)}
-                </span>
-              ) : null
-            )}
+          <div className="relative bg-[#fafbfc]" style={{ height: bodyHeight }}>
+            {hours.rows.map((row) => (
+              <span
+                key={row.minutes}
+                className={`absolute right-2 -translate-y-1/2 tabular-nums ${
+                  row.isHour
+                    ? "text-[11px] font-semibold text-navy"
+                    : "text-[10px] font-medium text-muted/70"
+                }`}
+                style={{ top: ((row.minutes - hours.start) / ROW_MINUTES) * ROW_HEIGHT }}
+              >
+                {rowLabel(row.minutes)}
+              </span>
+            ))}
+
+            {/* The marker Practo puts in the gutter: a wedge pointing at now. */}
+            {showNow ? (
+              <span
+                aria-hidden="true"
+                className="absolute right-0 -translate-y-1/2 border-y-[5px] border-r-[6px] border-y-transparent border-r-coral"
+                style={{ top: ((now - hours.start) / ROW_MINUTES) * ROW_HEIGHT }}
+              />
+            ) : null}
           </div>
 
           {range.days.map((day) => {
             const placed = layoutDay(byDay[day.key] ?? []);
+            const isToday = day.key === today;
             return (
               <div
                 key={day.key}
-                className={`relative border-l border-line ${
-                  day.isWeekend ? "bg-[#fbfcfd]" : ""
-                }`}
-                style={{ height: bodyHeight }}
+                className="relative border-l border-line"
+                style={{
+                  height: bodyHeight,
+                  backgroundColor: isToday
+                    ? TODAY_TINT
+                    : day.isWeekend
+                      ? "#fbfcfd"
+                      : undefined,
+                }}
               >
                 {/* half-hour rules, drawn once instead of one node per row */}
                 <div
@@ -464,7 +570,7 @@ function TimeGrid({ range, hours, byDay, today, now, scroller, onOpen }) {
                   }}
                 />
 
-                {day.key === today && showNow ? (
+                {isToday && showNow ? (
                   <div
                     aria-hidden="true"
                     className="absolute inset-x-0 z-10 border-t-2 border-coral"
@@ -478,24 +584,23 @@ function TimeGrid({ range, hours, byDay, today, now, scroller, onOpen }) {
                   <button
                     key={lead.id}
                     type="button"
-                    onClick={() => onOpen(lead)}
+                    onClick={(event) => onOpen(lead, event)}
                     title={`${formatSlotTime(lead.slotTime)} · ${lead.name}${
                       lead.treatment ? ` · ${lead.treatment}` : ""
                     }`}
-                    className={`absolute overflow-hidden rounded-[7px] border-l-[3px] px-1.5 py-1 text-left transition-shadow hover:z-20 hover:shadow-md ${
-                      BLOCK_STYLES[lead.status] ?? BLOCK_STYLES.new
-                    }`}
+                    className="absolute overflow-hidden rounded-[7px] border-l-[3px] px-1.5 py-1 text-left transition-shadow hover:z-20 hover:shadow-md"
                     style={{
+                      ...blockStyle(lead, colours),
                       top: ((start - hours.start) / ROW_MINUTES) * ROW_HEIGHT + 1,
                       height: ROW_HEIGHT - 3,
-                      left: `calc(${(lane / lanes) * 100}% + 2px)`,
-                      width: `calc(${100 / lanes}% - 4px)`,
+                      left: `calc(${(lane / lanes) * 100}% + 1px)`,
+                      width: `calc(${100 / lanes}% - 2px)`,
                     }}
                   >
-                    <span className="block truncate text-[12px] font-semibold leading-tight">
+                    <span className="block truncate text-[12px] font-bold leading-[1.25]">
                       {lead.name}
                     </span>
-                    <span className="block truncate text-[11px] leading-tight opacity-80">
+                    <span className="block truncate text-[10.5px] leading-[1.25] opacity-80">
                       {formatSlotTime(lead.slotTime)}
                       {lead.doctor ? DOT_SEP + lead.doctor : ""}
                     </span>
@@ -512,7 +617,7 @@ function TimeGrid({ range, hours, byDay, today, now, scroller, onOpen }) {
 
 /* ----------------------------------------------------------------- month */
 
-function MonthGrid({ range, byDay, today, onOpen, onDay }) {
+function MonthGrid({ range, byDay, colours, empty, filtered, today, onOpen, onDay }) {
   // Blank cells so the 1st sits under its real weekday.
   const firstWeekday = (() => {
     const day = range.days[0];
@@ -522,7 +627,9 @@ function MonthGrid({ range, byDay, today, onOpen, onDay }) {
   })();
 
   return (
-    <div className="overflow-hidden rounded-[13px] border border-line bg-white">
+    <div className="relative overflow-hidden">
+      {empty ? <EmptyDiary filtered={filtered} /> : null}
+
       <div className="grid grid-cols-7 border-b border-line bg-[#fafbfc]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((name) => (
           <p
@@ -546,7 +653,7 @@ function MonthGrid({ range, byDay, today, onOpen, onDay }) {
           return (
             <div
               key={day.key}
-              className="min-h-[112px] border-b border-l border-line p-1.5"
+              className="min-h-[112px] border-b border-l border-line p-1.5 last:border-b-0"
             >
               <button
                 type="button"
@@ -565,10 +672,9 @@ function MonthGrid({ range, byDay, today, onOpen, onDay }) {
                   <button
                     key={lead.id}
                     type="button"
-                    onClick={() => onOpen(lead)}
-                    className={`truncate rounded-[5px] border-l-[3px] px-1.5 py-0.5 text-left text-[11px] font-medium ${
-                      BLOCK_STYLES[lead.status] ?? BLOCK_STYLES.new
-                    }`}
+                    onClick={(event) => onOpen(lead, event)}
+                    className="truncate rounded-[5px] border-l-[3px] px-1.5 py-0.5 text-left text-[11px] font-medium"
+                    style={blockStyle(lead, colours)}
                   >
                     {formatSlotTime(lead.slotTime)} {lead.name}
                   </button>
@@ -594,6 +700,28 @@ function MonthGrid({ range, byDay, today, onOpen, onDay }) {
 
 /* ----------------------------------------------------------------- bits */
 
+/**
+ * Sits over an empty grid. Without it a filtered week reads as a broken screen
+ * rather than a quiet one, and the reason is three panels away.
+ */
+function EmptyDiary({ filtered }) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-2 px-6 text-center">
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#f0f4f9]">
+        <CalendarOff className="h-5 w-5 text-muted" aria-hidden="true" />
+      </span>
+      <p className="text-[14.5px] font-semibold text-navy">
+        {filtered ? "Nothing matches these filters" : "Nothing booked"}
+      </p>
+      <p className="max-w-[300px] text-[13px] leading-relaxed text-muted">
+        {filtered
+          ? "Clear the doctor or clinic filter, or try another week."
+          : "Appointments booked through the website appear here."}
+      </p>
+    </div>
+  );
+}
+
 function ArrowButton({ title, icon: Icon, onClick }) {
   return (
     <button
@@ -608,41 +736,70 @@ function ArrowButton({ title, icon: Icon, onClick }) {
   );
 }
 
-function FilterChip({ label, count, dot, title, active, onClick }) {
+/**
+ * A row in the doctors or clinics card.
+ *
+ * A doctor's row is washed in that doctor's own colour — the same colour their
+ * appointments wear on the grid — so the card reads as a key to the calendar
+ * rather than a plain list. Rows without a colour (the "All" rows, and the
+ * clinics) keep the panel's own selected blue.
+ */
+function FilterRow({ label, count, dot, title, active, onClick }) {
+  const tinted = dot
+    ? {
+        // Two alpha steps of one hue: a whisper when idle, clearly filled when
+        // chosen. Both stay light enough for the colour itself to be the text.
+        backgroundColor: `${dot}${active ? "2b" : "12"}`,
+        color: dot,
+        boxShadow: active ? `inset 3px 0 0 ${dot}` : undefined,
+      }
+    : undefined;
+
   return (
     <button
       type="button"
       onClick={onClick}
-      title={title}
+      title={title ?? label}
       aria-pressed={active}
-      className={`inline-flex h-9 items-center gap-2 rounded-full border px-4 text-[13.5px] font-semibold transition-colors ${
-        active
-          ? "border-deep bg-deep text-white"
-          : "border-line bg-white text-navy hover:border-brand hover:text-brand"
+      style={tinted}
+      className={`mb-1 flex w-full items-center gap-2 rounded-[8px] px-2 py-[7px] text-left text-[13px] transition-[filter,background-color] last:mb-0 hover:brightness-[0.96] ${
+        dot
+          ? active
+            ? "font-semibold"
+            : "font-medium"
+          : active
+            ? "bg-brand-50 font-semibold text-brand"
+            : "font-medium text-navy hover:bg-[#f6f8fb]"
       }`}
     >
       {dot ? (
         <span
           aria-hidden="true"
-          className="h-2 w-2 shrink-0 rounded-full"
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: dot }}
         />
-      ) : null}
-      {label}
-      <span className={active ? "tabular-nums text-white/70" : "tabular-nums text-muted"}>
+      ) : (
+        <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0" />
+      )}
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span
+        className={`shrink-0 text-[12px] tabular-nums ${
+          dot ? "opacity-70" : active ? "text-brand" : "text-muted"
+        }`}
+      >
         {count}
       </span>
     </button>
   );
 }
 
-function Tally({ label, value, tone }) {
+function Tally({ label, value, className }) {
   return (
-    <div className="px-2 py-2.5">
-      <p className="text-[10px] font-bold uppercase tracking-[0.07em] text-muted">
+    <div className={`rounded-[9px] px-2 py-2 text-center ${className}`}>
+      <p className="text-[9.5px] font-bold uppercase tracking-[0.07em] opacity-70">
         {label}
       </p>
-      <p className={`text-[18px] font-bold tabular-nums ${tone}`}>{value}</p>
+      <p className="text-[18px] font-bold leading-tight tabular-nums">{value}</p>
     </div>
   );
 }

@@ -15,32 +15,13 @@ import {
   formatDate,
   formatDay,
   formatSlotTime,
+  initialsOf,
   LeadDrawer,
   replyText,
   SOURCE_LABELS,
   STATUS_STYLES,
 } from "@/components/admin/leadShared";
-
-/** A colour per doctor, by name, so the same face keeps the same badge. */
-const DOCTOR_COLOURS = ["#1668c7", "#0f8478", "#9a5c07", "#7b4fd0", "#c2544f"];
-
-function doctorColour(name) {
-  if (!name) return "#8fa2b5";
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  return DOCTOR_COLOURS[hash % DOCTOR_COLOURS.length];
-}
-
-/** "Dr. Meenakshi Singh" → "MS". The "Dr." is not part of anyone's initials. */
-function initialsOf(name) {
-  const words = String(name ?? "")
-    .replace(/^dr\.?\s+/i, "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (!words.length) return "—";
-  return (words[0][0] + (words[1]?.[0] ?? "")).toUpperCase();
-}
+import { colourFor } from "@/lib/doctorColours";
 
 /** "2026-08-22" → { day: "22", month: "AUG 26" } */
 function stamp(lead) {
@@ -60,7 +41,7 @@ function stamp(lead) {
  * they have ever sent, newest first. Each entry opens the same detail panel the
  * lead screens use, so there is only one place a lead is ever edited.
  */
-export default function PatientRecord({ patient, siteName }) {
+export default function PatientRecord({ patient, siteName, doctorColours }) {
   const router = useRouter();
   const [active, setActive] = useState(null);
   const [pending, setPending] = useState("");
@@ -171,7 +152,7 @@ export default function PatientRecord({ patient, siteName }) {
                   <span
                     title={lead.doctor || "No doctor recorded"}
                     className="absolute -left-[46px] top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-[11.5px] font-bold text-white ring-4 ring-[#f6f8fb]"
-                    style={{ backgroundColor: doctorColour(lead.doctor) }}
+                    style={{ backgroundColor: colourFor(doctorColours, lead.doctor) }}
                   >
                     {initialsOf(lead.doctor)}
                   </span>
