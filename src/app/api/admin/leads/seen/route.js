@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/adminSession";
 import { getLeads } from "@/lib/mongodb";
-import { todayKey } from "@/lib/leads";
+import { APPOINTMENT_SOURCES, todayKey } from "@/lib/leads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +19,10 @@ function bucketFilter(kind) {
       return {
         $or: [
           { slotDate: { $gte: todayKey() } },
-          { slotDate: { $exists: false }, source: "service-enquiry" },
+          {
+            slotDate: { $exists: false },
+            source: { $in: APPOINTMENT_SOURCES },
+          },
         ],
       };
     case "plan":

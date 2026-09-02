@@ -94,3 +94,52 @@ export async function getLeads() {
 
   return leads;
 }
+
+let clinicalReady;
+
+/**
+ * The clinical file: visits, the records on them and the bills raised against
+ * them. Three collections rather than one document per patient, because a
+ * record is edited on its own and a patient's file grows for years.
+ */
+async function getClinical() {
+  const db = await getDb();
+  const visits = db.collection("visits");
+  const records = db.collection("records");
+  const invoices = db.collection("invoices");
+
+  if (!clinicalReady) {
+    clinicalReady = Promise.all([
+      // A patient's whole file, newest visit first.
+      visits.createIndex({ phoneDigits: 1, date: -1, time: -1 }),
+      // One visit per appointment: the upsert that starts a chart from a
+      // booking relies on this, so two clicks cannot make two visits.
+      visits.createIndex(
+        { leadId: 1 },
+        { unique: true, partialFilterExpression: { leadId: { $type: "objectId" } } }
+      ),
+      records.createIndex({ visitId: 1, createdAt: 1 }),
+      records.createIndex({ phoneDigits: 1, createdAt: -1 }),
+      invoices.createIndex({ visitId: 1, createdAt: 1 }),
+      invoices.createIndex({ phoneDigits: 1, createdAt: -1 }),
+    ]).catch((error) => {
+      clinicalReady = undefined;
+      console.error("Failed to create clinical indexes:", error);
+    });
+  }
+  await clinicalReady;
+
+  return { visits, records, invoices };
+}
+
+export async function getVisits() {
+  return (await getClinical()).visits;
+}
+
+export async function getRecords() {
+  return (await getClinical()).records;
+}
+
+export async function getInvoices() {
+  return (await getClinical()).invoices;
+}

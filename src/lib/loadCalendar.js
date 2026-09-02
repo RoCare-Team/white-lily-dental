@@ -1,11 +1,14 @@
-import { getClinics, getDoctors } from "@/lib/content";
+import { getClinics, getDoctors, getServices } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
-import { SLOT_HOLDING_STATUSES, serializeLead, todayKey } from "@/lib/leads";
+import {
+  APPOINTMENT_SOURCES,
+  SLOT_HOLDING_STATUSES,
+  UNASSIGNED,
+  serializeLead,
+  todayKey,
+} from "@/lib/leads";
 import { buildRange, gridHours } from "@/lib/calendar";
 import { buildDoctorColours } from "@/lib/doctorColours";
-
-/** Marks leads with no doctor recorded, so they stay reachable in the filter. */
-export const UNASSIGNED = "__none__";
 
 /**
  * Everything the appointments calendar draws.
@@ -21,9 +24,10 @@ export async function loadCalendar(params = {}) {
   const clinicId = params.clinic || "";
   const doctorName = params.doctor || "";
 
-  const [clinics, doctors, leads] = await Promise.all([
+  const [clinics, doctors, services, leads] = await Promise.all([
     getClinics(),
     getDoctors(),
+    getServices(),
     getLeads(),
   ]);
 
@@ -43,10 +47,16 @@ export async function loadCalendar(params = {}) {
       .sort({ slotDate: 1, slotTime: 1 })
       .toArray(),
 
-    // Treatment-page requests with no time chosen. They cannot sit on the grid,
-    // so they get their own strip above it rather than being left off entirely.
+    // Requests with no time chosen — from a treatment page, or taken at the
+    // desk. They cannot sit on the grid, so they get their own strip above it
+    // rather than being left off entirely.
     leads
-      .find({ ...held, ...byDoctor, slotDate: { $exists: false }, source: "service-enquiry" })
+      .find({
+        ...held,
+        ...byDoctor,
+        slotDate: { $exists: false },
+        source: { $in: APPOINTMENT_SOURCES },
+      })
       .sort({ createdAt: -1 })
       .limit(40)
       .toArray(),
@@ -123,6 +133,10 @@ export async function loadCalendar(params = {}) {
     // decides the colours, and only the server knows it.
     doctorColours: buildDoctorColours(doctors),
     doctorTotal: sum(doctorCounts),
+
+    // The pickers the "Add patient" form needs. Sent with the calendar rather
+    // than fetched when the form opens, so it has everything the moment it does.
+    treatments: services.map((service) => service.title).filter(Boolean),
 
     byDay,
     awaiting: awaiting.map(serializeLead),

@@ -368,12 +368,6 @@ export const SINGLETONS = {
       },
       { name: "googleReviewsUrl", label: "Google reviews link", type: "text" },
       {
-        name: "noindex",
-        label: "Hide the site from search engines",
-        type: "boolean",
-        help: "Keep this ON while the site is being built. Turn it OFF on launch day — until you do, Google will not list any page.",
-      },
-      {
         name: "socials",
         label: "Social links",
         type: "repeater",

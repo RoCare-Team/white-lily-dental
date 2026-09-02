@@ -33,7 +33,26 @@ export const LEAD_SOURCES = [
   "service-enquiry",
   "booking-wizard",
   "plan-enquiry",
+  // Typed in at the desk rather than sent by the patient: a walk-in, or a
+  // booking taken over the phone.
+  "walk-in",
 ];
+
+/**
+ * Sources that belong to the appointments screen even with no time chosen yet.
+ * A treatment-page request and a walk-in registered at the desk are both people
+ * waiting to be given a slot, so both sit on the calendar's "Awaiting a time"
+ * strip instead of landing in the contact inbox.
+ */
+export const APPOINTMENT_SOURCES = ["service-enquiry", "walk-in"];
+
+/**
+ * Marks appointments with no doctor recorded, so the calendar's doctor filter
+ * can still reach them. It lives here rather than beside the query that uses
+ * it, because the calendar in the browser has to recognise it too and cannot
+ * import anything that reaches the database.
+ */
+export const UNASSIGNED = "__none__";
 
 export const LEADS_PAGE_SIZE = 25;
 
@@ -66,7 +85,10 @@ export function buildLeadFilter(searchParams) {
     // Everything the patient asked to be seen for: a reserved slot from the
     // booking wizard, or a "Request appointment" form on a treatment page.
     clauses.push({
-      $or: [{ slotDate: { $exists: true } }, { source: "service-enquiry" }],
+      $or: [
+        { slotDate: { $exists: true } },
+        { source: { $in: APPOINTMENT_SOURCES } },
+      ],
     });
 
     const when = searchParams.get("when");
@@ -81,7 +103,7 @@ export function buildLeadFilter(searchParams) {
     // unexpected source still shows up somewhere instead of vanishing.
     clauses.push({
       slotDate: { $exists: false },
-      source: { $nin: ["plan-enquiry", "service-enquiry"] },
+      source: { $nin: ["plan-enquiry", ...APPOINTMENT_SOURCES] },
     });
   } else if (bucket === "plan") {
     clauses.push({ source: "plan-enquiry" });

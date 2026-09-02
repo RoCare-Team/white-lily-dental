@@ -75,10 +75,17 @@ export async function generateMetadata() {
       description: site.intro,
       images: ["/images/og-image.png"],
     },
-    // Flipped from Site settings → "Hide the site from search engines".
-    robots: site.noindex
-      ? { index: false, follow: false, nocache: true }
-      : { index: true, follow: true },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
   };
 }
 

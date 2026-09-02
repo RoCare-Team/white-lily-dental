@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   List,
+  UserPlus,
   X,
 } from "lucide-react";
 
@@ -18,7 +19,9 @@ import {
 } from "@/components/admin/leadShared";
 import { colourFor } from "@/lib/doctorColours";
 import AdminToolbar from "@/components/admin/toolbarSlot";
+import NewPatientForm from "@/components/admin/NewPatientForm";
 import { layoutDay, minutesOf, ROW_HEIGHT, ROW_MINUTES } from "@/lib/calendar";
+import { UNASSIGNED } from "@/lib/leads";
 
 /**
  * An appointment block wears its doctor's colour: a wash of it behind, the full
@@ -54,6 +57,13 @@ function rowLabel(minutes) {
   return `${hour}:${String(m).padStart(2, "0")} ${period}`;
 }
 
+/** 810 → "13:30". The shape a slot is stored in, from a click on the grid. */
+function timeValue(minutes) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(
+    minutes % 60
+  ).padStart(2, "0")}`;
+}
+
 /** The tint down today's column — warm, so it reads as "now" beside the blues. */
 const TODAY_TINT = "#fff6f0";
 
@@ -71,7 +81,14 @@ export default function AppointmentCalendar({
   const [anchorEl, setAnchorEl] = useState(null);
   const [pending, setPending] = useState("");
 
+  /* The "Add patient" form. Null when closed; otherwise the details the form
+     should open with — the day and half hour that were clicked, and whatever
+     clinic the calendar is already filtered to. */
+  const [adding, setAdding] = useState(null);
+
   const openLead = (lead, event) => {
+    // The blocks sit inside a day column that opens the add form when clicked.
+    event?.stopPropagation();
     setAnchorEl(event?.currentTarget ?? null);
     setActive(lead);
   };
@@ -105,6 +122,7 @@ export default function AppointmentCalendar({
     doctorName,
     doctorTotal,
     doctorColours,
+    treatments = [],
     today,
   } = data;
 
@@ -161,6 +179,21 @@ export default function AppointmentCalendar({
     }
   };
 
+  /** Everything the add form needs, in the shape it wants. */
+  const addDefaults = (extra = {}) => ({
+    clinicId,
+    doctor: doctorName && doctorName !== UNASSIGNED ? doctorName : "",
+    ...extra,
+  });
+
+  // The "No doctor chosen" row is a filter, not a person to book with.
+  const bookableDoctors = doctors
+    .filter((doctor) => doctor.name && doctor.name !== UNASSIGNED)
+    .map((doctor) => ({
+      name: doctor.name,
+      colour: colourFor(doctorColours, doctor.name),
+    }));
+
   const isMonth = range.view === "month";
   const visible = Object.values(byDay).reduce((total, list) => total + list.length, 0);
   const filtered = Boolean(doctorName || clinicId);
@@ -215,6 +248,15 @@ export default function AppointmentCalendar({
             </button>
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setAdding(addDefaults())}
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-[9px] bg-brand px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark"
+        >
+          <UserPlus className="h-4 w-4" aria-hidden="true" />
+          Add patient
+        </button>
 
         <button
           type="button"
@@ -317,6 +359,7 @@ export default function AppointmentCalendar({
               filtered={filtered}
               today={today}
               onOpen={openLead}
+              onAdd={(key) => setAdding(addDefaults({ date: key }))}
               onDay={(key) => pushQuery({ span: "day", date: key })}
             />
           ) : (
@@ -331,6 +374,7 @@ export default function AppointmentCalendar({
               now={now}
               scroller={scroller}
               onOpen={openLead}
+              onAdd={(key, time) => setAdding(addDefaults({ date: key, time }))}
             />
           )}
         </div>
@@ -362,9 +406,19 @@ export default function AppointmentCalendar({
           </div>
 
           {todaySchedule.length === 0 ? (
-            <p className="px-4 py-8 text-center text-[13.5px] leading-relaxed text-muted">
-              Nothing booked for today.
-            </p>
+            <div className="px-4 py-8 text-center">
+              <p className="text-[13.5px] leading-relaxed text-muted">
+                Nothing booked for today.
+              </p>
+              <button
+                type="button"
+                onClick={() => setAdding(addDefaults({ date: today }))}
+                className="mt-3 inline-flex h-9 items-center gap-2 rounded-[9px] border border-line bg-white px-3.5 text-[13px] font-semibold text-brand transition-colors hover:border-brand hover:bg-brand-50"
+              >
+                <UserPlus className="h-4 w-4" aria-hidden="true" />
+                Add a patient
+              </button>
+            </div>
           ) : (
             <ul className="divide-y divide-line/70">
               {todaySchedule.map((lead) => (
@@ -412,6 +466,21 @@ export default function AppointmentCalendar({
         </aside>
       </div>
 
+      <NewPatientForm
+        open={Boolean(adding)}
+        defaults={adding ?? {}}
+        clinics={clinics}
+        doctors={bookableDoctors}
+        treatments={treatments}
+        onClose={() => setAdding(null)}
+        onSaved={() => {
+          // The grid redraws behind the form, which stays up just long enough
+          // to say what happened before it closes itself.
+          router.refresh();
+          setTimeout(() => setAdding(null), 1200);
+        }}
+      />
+
       {active ? (
         <LeadDrawer
           lead={active}
@@ -450,7 +519,22 @@ function TimeGrid({
   now,
   scroller,
   onOpen,
+  onAdd,
 }) {
+  /* A click on bare grid is a booking at that half hour — the way every diary
+     works. Only the column itself answers; the blocks on top of it stop their
+     own clicks, and the rules and the now-line let them through. */
+  const addAt = (dayKey) => (event) => {
+    if (event.target !== event.currentTarget) return;
+    const top = event.currentTarget.getBoundingClientRect().top;
+    const row = Math.floor((event.clientY - top) / ROW_HEIGHT);
+    const minutes = Math.min(
+      hours.end - ROW_MINUTES,
+      Math.max(hours.start, hours.start + row * ROW_MINUTES)
+    );
+    onAdd(dayKey, timeValue(minutes));
+  };
+
   const columns = `68px repeat(${range.days.length}, minmax(0, 1fr))`;
   const bodyHeight = hours.rows.length * ROW_HEIGHT;
   const showNow = now >= hours.start && now <= hours.end;
@@ -548,7 +632,9 @@ function TimeGrid({
             return (
               <div
                 key={day.key}
-                className="relative border-l border-line"
+                onClick={addAt(day.key)}
+                title="Click an empty slot to add a patient"
+                className="relative cursor-copy border-l border-line"
                 style={{
                   height: bodyHeight,
                   backgroundColor: isToday
@@ -561,7 +647,7 @@ function TimeGrid({
                 {/* half-hour rules, drawn once instead of one node per row */}
                 <div
                   aria-hidden="true"
-                  className="absolute inset-0"
+                  className="pointer-events-none absolute inset-0"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(to bottom, var(--wl-line, #e6ecf3) 0 1px, transparent 1px " +
@@ -573,7 +659,7 @@ function TimeGrid({
                 {isToday && showNow ? (
                   <div
                     aria-hidden="true"
-                    className="absolute inset-x-0 z-10 border-t-2 border-coral"
+                    className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-coral"
                     style={{ top: ((now - hours.start) / ROW_MINUTES) * ROW_HEIGHT }}
                   >
                     <span className="absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-coral" />
@@ -617,7 +703,7 @@ function TimeGrid({
 
 /* ----------------------------------------------------------------- month */
 
-function MonthGrid({ range, byDay, colours, empty, filtered, today, onOpen, onDay }) {
+function MonthGrid({ range, byDay, colours, empty, filtered, today, onOpen, onAdd, onDay }) {
   // Blank cells so the 1st sits under its real weekday.
   const firstWeekday = (() => {
     const day = range.days[0];
@@ -653,8 +739,20 @@ function MonthGrid({ range, byDay, colours, empty, filtered, today, onOpen, onDa
           return (
             <div
               key={day.key}
-              className="min-h-[112px] border-b border-l border-line p-1.5 last:border-b-0"
+              className="group/day relative min-h-[112px] border-b border-l border-line p-1.5 last:border-b-0"
             >
+              {/* Reveals itself on hover, so a month of empty squares is not a
+                  month of buttons. */}
+              <button
+                type="button"
+                title={`Add a patient on ${day.dayNumber} ${day.month}`}
+                onClick={() => onAdd(day.key)}
+                className="absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-[7px] text-muted opacity-0 transition-opacity hover:bg-brand-50 hover:text-brand focus-visible:opacity-100 group-hover/day:opacity-100"
+              >
+                <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="sr-only">Add a patient</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => onDay(day.key)}
@@ -713,10 +811,10 @@ function EmptyDiary({ filtered }) {
       <p className="text-[14.5px] font-semibold text-navy">
         {filtered ? "Nothing matches these filters" : "Nothing booked"}
       </p>
-      <p className="max-w-[300px] text-[13px] leading-relaxed text-muted">
+      <p className="max-w-[320px] text-[13px] leading-relaxed text-muted">
         {filtered
           ? "Clear the doctor or clinic filter, or try another week."
-          : "Appointments booked through the website appear here."}
+          : "Appointments booked through the website appear here. Click any empty slot to add a patient yourself."}
       </p>
     </div>
   );

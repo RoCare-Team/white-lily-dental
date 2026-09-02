@@ -35,6 +35,7 @@ export const SOURCE_LABELS = {
   "service-enquiry": "Service page",
   "booking-wizard": "Booking wizard",
   "plan-enquiry": "Dental plan",
+  "walk-in": "Added at the desk",
 };
 
 export function formatDate(iso) {
