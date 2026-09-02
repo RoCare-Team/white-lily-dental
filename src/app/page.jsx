@@ -16,18 +16,41 @@ import JsonLd from "@/components/JsonLd";
 import { getHomeFaqs, getServices } from "@/lib/content";
 import { faqSchema } from "@/lib/schema";
 
+// Title, description and keywords are carried over verbatim from the old live
+// site so the pages Google already ranks keep the same snippet after launch.
+const HOME_TITLE =
+  "Best Dental Clinic | Book A Dentist @09711811272 - White Lily Dental";
+
+const HOME_DESCRIPTION =
+  "White Lily Dental : Looking for a dentist for teeth related issues? Visit your nearest dental clinic for all oral health concerns. Searching for near by dental clinic in Gurgaon, Call us @9289288848 to book an appointment with our professional Dentists.";
+
 export const metadata = {
-  title:
-    "White Lily Dental | Best Dental Clinic in Gurugram — Sector 69 & 77",
-  description:
-    "White Lily Dental is a multi-specialist dental clinic in Gurugram offering braces, dental implants, root canal treatment, cosmetic dentistry and preventive care. 21+ years of experience, MDS specialists, open all 7 days.",
+  // `absolute` keeps the root layout's "%s | White Lily Dental Gurugram"
+  // template from appending the brand name a second time.
+  title: { absolute: HOME_TITLE },
+  description: HOME_DESCRIPTION,
+  keywords: [
+    "whitelily dental",
+    "dental clinic gurgaon",
+    "dental clinic",
+    "dentist clinic",
+    "book a dentist",
+    "dental for kids",
+    "dental hospitals",
+    "teeth dentist",
+  ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "White Lily Dental | Best Dental Clinic in Gurugram",
-    description:
-      "Braces, dental implants, root canals, cosmetic dentistry and preventive care by MDS specialists at our Sector 69 and 77 clinics in Gurugram.",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     url: "/",
     type: "website",
+    images: ["/images/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     images: ["/images/og-image.png"],
   },
 };

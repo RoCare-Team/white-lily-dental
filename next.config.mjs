@@ -14,6 +14,19 @@ const nextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
   },
+  // One host, one set of URLs. Every canonical, the sitemap and robots.txt all
+  // point at www, so the bare domain must not serve a second copy of the site.
+  // Localhost is untouched — the rule only fires for the apex domain.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "whitelilydental.in" }],
+        destination: "https://www.whitelilydental.in/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
