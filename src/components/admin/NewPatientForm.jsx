@@ -70,8 +70,10 @@ export default function NewPatientForm({
   const [date, setDate] = useState("");
   const [slotTime, setSlotTime] = useState("");
 
-  const [slots, setSlots] = useState([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  // The rows are kept with the key they were fetched for, so "which day is on
+  // screen" is derived rather than cleared by hand on every change.
+  const [slotData, setSlotData] = useState({ key: "", slots: [] });
+  const [reload, setReload] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
@@ -88,7 +90,7 @@ export default function NewPatientForm({
       setForm({ ...EMPTY, doctor: defaults.doctor || "" });
       setError("");
       setDone("");
-      setSlots([]);
+      setSlotData({ key: "", slots: [] });
       setBooking(true);
       setClinicId(defaults.clinicId || (clinics.length === 1 ? clinics[0].id : ""));
       setDate(defaults.date || todayKey());
@@ -112,32 +114,37 @@ export default function NewPatientForm({
   /* The day's times, with the ones already held marked. This is the staff
      endpoint, so it shows the whole day — including times the website would
      refuse to offer because they are an hour away or already past. */
-  const [reload, setReload] = useState(0);
+  const slotsKey =
+    open && booking && clinicId && date ? `${clinicId}|${date}|${reload}` : "";
+
+  // Anything the form is not currently asking for is simply not rendered, and
+  // a key that has not arrived yet is what "loading" means.
+  const slots = slotsKey && slotData.key === slotsKey ? slotData.slots : [];
+  const loadingSlots = Boolean(slotsKey) && slotData.key !== slotsKey;
+
   useEffect(() => {
-    if (!open || !booking || !clinicId || !date) {
-      setSlots([]);
-      return undefined;
-    }
+    if (!slotsKey) return undefined;
 
     let cancelled = false;
-    setLoadingSlots(true);
 
     fetch(`/api/admin/appointments?clinic=${encodeURIComponent(clinicId)}&date=${date}`)
       .then((response) => response.json())
       .then((data) => {
-        if (!cancelled) setSlots(Array.isArray(data.slots) ? data.slots : []);
+        if (!cancelled) {
+          setSlotData({
+            key: slotsKey,
+            slots: Array.isArray(data.slots) ? data.slots : [],
+          });
+        }
       })
       .catch(() => {
-        if (!cancelled) setSlots([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingSlots(false);
+        if (!cancelled) setSlotData({ key: slotsKey, slots: [] });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [open, booking, clinicId, date, reload]);
+  }, [slotsKey, clinicId, date]);
 
   if (!open) return null;
 
