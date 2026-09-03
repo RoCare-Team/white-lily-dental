@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
@@ -21,9 +22,15 @@ import { bookingWindow, formatTime } from "@/lib/slots";
 const STEPS = [
   { key: "clinic", label: "Select Clinic", icon: Building2 },
   { key: "slot", label: "Select Date & Time", icon: CalendarCheck },
+  { key: "doctor", label: "Choose Doctor", icon: Stethoscope },
   { key: "details", label: "Personal Details", icon: User },
   { key: "done", label: "Finish", icon: Check },
 ];
+
+/* Chosen instead of a name when the patient does not mind who they see. It is
+   sent as an empty doctor, which is what the admin calendar files under
+   "No doctor chosen". */
+const ANY_DOCTOR = "__any__";
 
 const field =
   "h-12 w-full rounded-xl border border-line bg-white px-4 text-[15px] text-navy outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15";
@@ -57,6 +64,8 @@ export default function BookingModal({
   const [slots, setSlots] = useState([]);
   const [slotTime, setSlotTime] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
+
+  const [doctorName, setDoctorName] = useState("");
 
   const [form, setForm] = useState({ name: "", phone: "", email: "", company: "" });
   const [busy, setBusy] = useState(false);
@@ -103,6 +112,7 @@ export default function BookingModal({
     setDate("");
     setSlots([]);
     setSlotTime("");
+    setDoctorName("");
     setForm({ name: "", phone: "", email: "", company: "" });
     setTreatment("");
     setContext({});
@@ -140,6 +150,7 @@ export default function BookingModal({
         setClinicId(next.clinicId);
       }
       if (next.treatment) setTreatment(next.treatment);
+      if (next.doctor) setDoctorName(next.doctor);
       setOpen(true);
     };
 
@@ -197,6 +208,14 @@ export default function BookingModal({
 
   const clinic = clinics.find((item) => item.id === clinicId);
 
+  /* With no doctors published there is nobody to choose, so the step is left
+     out of the stepper and stepped over in both directions. */
+  const showDoctorStep = doctors.length > 0;
+  const visibleSteps = showDoctorStep
+    ? STEPS
+    : STEPS.filter((item) => item.key !== "doctor");
+  const chosenDoctor = doctorName === ANY_DOCTOR ? "" : doctorName;
+
   const submit = async (event) => {
     event.preventDefault();
     setBusy(true);
@@ -212,7 +231,7 @@ export default function BookingModal({
           slotDate: date,
           slotTime,
           treatment,
-          doctor: context.doctor ?? "",
+          doctor: doctorName === ANY_DOCTOR ? "" : doctorName,
           plan: context.plan ?? "",
           pageUrl: window.location.pathname + window.location.search,
         }),
@@ -236,7 +255,7 @@ export default function BookingModal({
       }
 
       setBooking(data.booking);
-      setStep(3);
+      setStep(4);
     } catch {
       setError(`Could not reach our server. Please call us on ${site.phoneDisplay}.`);
     } finally {
@@ -283,7 +302,8 @@ export default function BookingModal({
 
         {/* Stepper */}
         <ol className="flex shrink-0 items-start gap-1 px-5 pt-5 sm:px-6">
-          {STEPS.map((s, index) => {
+          {visibleSteps.map((s) => {
+            const index = STEPS.indexOf(s);
             const Icon = s.icon;
             const done = index < step;
             const current = index === step;
@@ -319,7 +339,7 @@ export default function BookingModal({
         <div className="flex-1 overflow-y-auto px-5 pb-6 pt-5 sm:px-6">
           {/* What the button that opened this was about — so the patient can
               see they are booking the right thing. */}
-          {step < 3 && (treatment || context.doctor || context.plan) ? (
+          {step < 4 && (treatment || chosenDoctor || context.plan) ? (
             <div className="mb-5 rounded-xl border border-brand/25 bg-brand-50 px-4 py-3">
               <p className="text-[11px] font-bold uppercase tracking-wide text-brand">
                 Booking for
@@ -331,10 +351,12 @@ export default function BookingModal({
                     <dd className="font-semibold text-navy">{treatment}</dd>
                   </div>
                 ) : null}
-                {context.doctor ? (
+                {/* On the doctor step the cards below already say who is
+                    selected, so the line would only repeat itself. */}
+                {chosenDoctor && step !== 2 ? (
                   <div className="flex gap-2">
                     <dt className="text-muted">Doctor</dt>
-                    <dd className="font-semibold text-navy">{context.doctor}</dd>
+                    <dd className="font-semibold text-navy">{chosenDoctor}</dd>
                   </div>
                 ) : null}
                 {context.plan ? (
@@ -493,15 +515,125 @@ export default function BookingModal({
 
               <Actions
                 onBack={() => setStep(0)}
-                onNext={() => setStep(2)}
+                onNext={() => setStep(showDoctorStep ? 2 : 3)}
                 nextDisabled={!date || !slotTime}
                 nextHint={!date ? "Choose a date" : !slotTime ? "Choose a time" : ""}
               />
             </>
           ) : null}
 
-          {/* 3 — patient details */}
-          {step === 2 ? (
+          {/* 3 — doctor */}
+          {step === 2 && showDoctorStep ? (
+            <>
+              <p className="text-[13.5px] leading-relaxed text-muted">
+                Who would you like to see? The appointment is put in that
+                doctor&apos;s name straight away.
+              </p>
+
+              <ul className="mt-3.5 space-y-3">
+                {doctors.map((item) => {
+                  const selected = item.name === doctorName;
+                  return (
+                    <li key={item.slug ?? item.name}>
+                      <button
+                        type="button"
+                        onClick={() => setDoctorName(item.name)}
+                        aria-pressed={selected}
+                        className={`flex w-full items-center gap-4 rounded-[13px] border p-4 text-left transition-colors ${
+                          selected
+                            ? "border-brand bg-brand-50"
+                            : "border-line hover:border-brand-200 hover:bg-brand-50/40"
+                        }`}
+                      >
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt=""
+                            width={52}
+                            height={52}
+                            className="h-[52px] w-[52px] shrink-0 rounded-full bg-brand-50 object-cover object-top"
+                          />
+                        ) : (
+                          <span className="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                            <User className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        )}
+
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[15.5px] font-bold leading-snug text-navy">
+                            {item.name}
+                          </span>
+                          {item.qualification || item.specialty ? (
+                            <span className="mt-1 block text-[13px] leading-relaxed text-muted">
+                              {item.qualification || item.specialty}
+                            </span>
+                          ) : null}
+                        </span>
+
+                        <span
+                          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                            selected
+                              ? "border-brand bg-brand text-white"
+                              : "border-line bg-white"
+                          }`}
+                        >
+                          {selected ? (
+                            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                          ) : null}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setDoctorName(ANY_DOCTOR)}
+                    aria-pressed={doctorName === ANY_DOCTOR}
+                    className={`flex w-full items-center gap-4 rounded-[13px] border p-4 text-left transition-colors ${
+                      doctorName === ANY_DOCTOR
+                        ? "border-brand bg-brand-50"
+                        : "border-line hover:border-brand-200 hover:bg-brand-50/40"
+                    }`}
+                  >
+                    <span className="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-[#eef2f6] text-muted">
+                      <Stethoscope className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15.5px] font-bold leading-snug text-navy">
+                        No preference
+                      </span>
+                      <span className="mt-1 block text-[13px] leading-relaxed text-muted">
+                        The clinic will assign the right specialist for you.
+                      </span>
+                    </span>
+                    <span
+                      className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                        doctorName === ANY_DOCTOR
+                          ? "border-brand bg-brand text-white"
+                          : "border-line bg-white"
+                      }`}
+                    >
+                      {doctorName === ANY_DOCTOR ? (
+                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : null}
+                    </span>
+                  </button>
+                </li>
+              </ul>
+
+              <Actions
+                onBack={() => setStep(1)}
+                onNext={() => setStep(3)}
+                nextDisabled={!doctorName}
+                nextHint={!doctorName ? "Choose a doctor to continue" : ""}
+              />
+            </>
+          ) : null}
+
+          {/* 4 — patient details */}
+          {step === 3 ? (
             <form onSubmit={submit}>
               <div className="mb-5 rounded-xl border border-brand/25 bg-brand-50 p-3.5 text-[13.5px] text-navy">
                 <span className="font-semibold">{clinic?.shortName}</span>
@@ -509,6 +641,12 @@ export default function BookingModal({
                 {formatDate(date)}
                 {" · "}
                 <span className="font-semibold">{formatTime(slotTime)}</span>
+                {chosenDoctor ? (
+                  <>
+                    {" · "}
+                    <span className="font-semibold">{chosenDoctor}</span>
+                  </>
+                ) : null}
               </div>
 
               <div className="space-y-3.5">
@@ -584,7 +722,7 @@ export default function BookingModal({
               </div>
 
               <Actions
-                onBack={() => setStep(1)}
+                onBack={() => setStep(showDoctorStep ? 2 : 1)}
                 submit
                 busy={busy}
                 nextLabel="Confirm Booking"
@@ -592,8 +730,8 @@ export default function BookingModal({
             </form>
           ) : null}
 
-          {/* 4 — done */}
-          {step === 3 && booking ? (
+          {/* 5 — done */}
+          {step === 4 && booking ? (
             <div className="text-center">
               <span className="wl-confirm-tick mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-teal-50">
                 <CheckCircle2 className="h-9 w-9 text-teal" aria-hidden="true" />
@@ -614,6 +752,9 @@ export default function BookingModal({
                   <Row icon={MapPin} term="Clinic" value={booking.clinic} />
                   <Row icon={CalendarCheck} term="Date" value={formatDate(booking.date)} />
                   <Row icon={Clock} term="Time" value={booking.timeLabel} />
+                  {chosenDoctor ? (
+                    <Row icon={User} term="Doctor" value={chosenDoctor} />
+                  ) : null}
                   {treatment ? (
                     <Row icon={Stethoscope} term="For" value={treatment} />
                   ) : null}

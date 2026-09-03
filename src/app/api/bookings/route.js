@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getClinics } from "@/lib/content";
+import { getClinics, getDoctors } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
 import { parseLead, SLOT_HOLDING_STATUSES } from "@/lib/leads";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
@@ -77,8 +77,14 @@ export async function POST(request) {
       );
     }
 
+    // Only a name that is actually on the doctors list is kept, so the
+    // calendar cannot end up with a doctor column nobody works under.
+    const doctors = await getDoctors();
+    const doctor = doctors.find((item) => item.name === body.doctor);
+
     const parsed = parseLead({
       ...body,
+      doctor: doctor?.name ?? "",
       clinic: clinic.shortName,
       source: "booking-wizard",
     });
