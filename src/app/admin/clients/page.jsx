@@ -3,6 +3,7 @@ import PageTitle from "@/components/admin/PageTitle";
 import { loadLeadPage } from "@/lib/loadLeads";
 import { getSettings } from "@/lib/content";
 
+
 export const metadata = { title: "Clients" };
 
 // Leads change constantly — never serve this from the cache.
