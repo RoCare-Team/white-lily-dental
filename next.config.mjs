@@ -25,6 +25,37 @@ const nextConfig = {
         destination: "https://www.whitelilydental.in/:path*",
         permanent: true,
       },
+      // URLs from the old website that Google still has indexed. Without
+      // these they land on the 404 page instead of passing their ranking on.
+      {
+        source: "/:page(dental-clinic-near-me.*|dentist-near-me.*)",
+        destination: "/clinics",
+        permanent: true,
+      },
+      { source: "/our-services", destination: "/services", permanent: true },
+      { source: "/about-us", destination: "/about", permanent: true },
+      { source: "/contact-us", destination: "/contact", permanent: true },
+      { source: "/gallery", destination: "/contact", permanent: true },
+      { source: "/booknow", destination: "/dental-plans", permanent: true },
+      // Old blog posts were /blog/<id>/<slug>; none carried over, so send
+      // them to the blog index rather than a 404.
+      { source: "/blog/:id/:slug", destination: "/blog", permanent: true },
+      // Old sub-treatment pages, e.g. /services/cosmetic-dentistry/veneer.
+      {
+        source: "/services/:slug/:sub+",
+        destination: "/services/:slug",
+        permanent: true,
+      },
+      {
+        source: "/service/braces",
+        destination: "/services/braces-treatment",
+        permanent: true,
+      },
+      {
+        source: "/service/:slug",
+        destination: "/services/:slug",
+        permanent: true,
+      },
     ];
   },
 };

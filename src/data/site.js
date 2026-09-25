@@ -20,10 +20,10 @@ export const site = {
   intro:
     "White Lily Dental is a multi-specialist dental chain in Gurugram offering orthodontics, implants, prosthodontics, cosmetic dentistry, endodontics and oral surgery under one roof — delivered by experienced MDS specialists using advanced dental technology.",
   socials: [
-    { label: "Facebook", href: "https://www.facebook.com/whitelilydental" },
-    { label: "Instagram", href: "https://www.instagram.com/whitelilydental" },
-    { label: "LinkedIn", href: "https://www.linkedin.com/company/whitelilydental" },
-    { label: "Twitter", href: "https://twitter.com/whitelilydental" },
+    { label: "Facebook", href: "https://www.facebook.com/whitelilydentalindia/" },
+    { label: "Instagram", href: "https://www.instagram.com/whitelilydentalindia/" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/company/whitelilydental/" },
+    { label: "X", href: "https://x.com/whitelilydental" },
   ],
   googleReviewsUrl: "https://www.google.com/search?q=White+Lily+Dental+Gurgaon+reviews",
 };
