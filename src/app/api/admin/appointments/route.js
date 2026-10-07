@@ -5,6 +5,7 @@ import { getClinics } from "@/lib/content";
 import { getLeads } from "@/lib/mongodb";
 import { parseLead, serializeLead, SLOT_HOLDING_STATUSES } from "@/lib/leads";
 import { formatTime, generateSlots, isValidDate, isValidTime } from "@/lib/slots";
+import { sendBookingConfirmations } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -172,6 +173,17 @@ export async function POST(request) {
 
     const { insertedId } = await leads.insertOne(record);
     const doc = await leads.findOne({ _id: insertedId });
+
+    if (wantsSlot) {
+      await sendBookingConfirmations({
+        name: record.name,
+        phone: record.phone,
+        clinic: record.clinic,
+        doctor: record.doctor,
+        slotDate: record.slotDate,
+        slotTime: record.slotTime,
+      });
+    }
 
     return NextResponse.json(
       { ok: true, lead: serializeLead(doc), returning: previous > 0 },

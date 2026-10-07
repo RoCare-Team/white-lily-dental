@@ -5,6 +5,7 @@ import { getLeads } from "@/lib/mongodb";
 import { parseLead, SLOT_HOLDING_STATUSES } from "@/lib/leads";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
 import { availableSlots, formatTime, isValidDate, isValidTime } from "@/lib/slots";
+import { sendBookingConfirmations } from "@/lib/whatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,6 +103,15 @@ export async function POST(request) {
         userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? "",
         referer: request.headers.get("referer")?.slice(0, 300) ?? "",
       },
+    });
+
+    await sendBookingConfirmations({
+      name: parsed.lead.name,
+      phone: parsed.lead.phone,
+      clinic: clinic.shortName || clinic.name,
+      doctor: parsed.lead.doctor,
+      slotDate,
+      slotTime,
     });
 
     return NextResponse.json(
